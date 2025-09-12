@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jiweigang1/clilogger.git"
@@ -15,5 +16,9 @@
     "url": "https://github.com/jiweigang1/clilogger/issues"
   },
   "homepage": "https://github.com/jiweigang1/clilogger#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "pino": "^9.9.5",
+    "rotating-file-stream": "^3.2.7"
+  }
 }
