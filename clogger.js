@@ -1,7 +1,49 @@
-import logger from './logger.js';
+import apiFullLogger,{apiSimpleLogger} from './logger.js';
 import mergeAnthropicChunks  from './api.js';
 
-logger.debug("-------------Clogger Start--------------------------");
+apiFullLogger.debug("-------------Clogger Start--------------------------");
+
+function deepClone(obj) {
+  const result = JSON.parse(JSON.stringify(obj));
+  return result;
+}
+function formateLine(str){
+    let r = str.replace(/\\n/g, '\n');
+    return r;
+}
+function toSimpleLog(fullLog){
+    //删除 tool 列表
+    let  slog = deepClone(fullLog);
+    //input.replace(/\\n/g, '\n')
+    let result = {
+        request:slog.request.body.messages,
+        response:slog.response.body.content
+    };
+    /** 
+    result.request.forEach((message, index) => {
+        if(typeof message.content === "string"){
+             message.content = formateLine(message.content);
+        }else if(Array.isArray(message.content)){
+            message.content.forEach((content, index) => {
+                content.text = formateLine(content.text);
+            });
+        }
+    });
+    console.log(result);
+    */
+
+    return result;
+}
+
+function logAPI(fullLog){
+    let slog = toSimpleLog(fullLog);
+    apiFullLogger.debug(fullLog);
+    apiSimpleLogger.debug(slog);
+    //要及时输出
+    apiFullLogger.flush();
+    apiSimpleLogger.flush();
+}
+
 async function* streamGenerator(stream) {
     const reader = stream.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -26,17 +68,27 @@ async function* streamGenerator(stream) {
         }
     }
 }
+
+function headersToObject(headers) {
+  const obj = {};
+  try {
+    for (const [k, v] of headers.entries()) obj[k] = v;
+  } catch {}
+  return obj;
+}
+
 // 输入和输出日志可以打印在一个 JSON 结构中
 function instrumentFetch() {
   if (!global.fetch || global.fetch.__ProxyInstrumented) return;
   
-  logger.debug("-------------Clogger instrumentFetch--------------------------");
+  console.log("-------------Clogger instrumentFetch--------------------------");
 
   const originalFetch = global.fetch;
   global.fetch = async (input, init = {}) => {
-	
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 	
+    //console.log(url);
+
    //如果没有 body 不处理	
    if(typeof(init?.body) == "undefined"){
 	   return originalFetch(input,init);
@@ -65,8 +117,19 @@ function instrumentFetch() {
 		  return response;
 	  }
 	  
-	  //请求和返回返到一起
-	  let log = {request:obody};
+	  //完整的请求日志，保护请求和响应
+	  let fullLog = {request:{
+        url:url,
+        method: init.method,
+        headers: headersToObject(init.headers),
+        body: obody
+      },response:{
+            status: response.status,
+            statusText: response.statusText,
+            headers: headersToObject(response.headers)
+      }};
+
+     //console.log(JSON.stringify(fullLog, null, 2));
 	  
 	  const streamTypes = [
 		'text/event-stream'
@@ -83,9 +146,9 @@ function instrumentFetch() {
 					let ck = encoder.encode(chunk);
                     controller.enqueue(ck);
                 }
-				log.response = mergeAnthropicChunks(allchunk);
-				//console.log(JSON.stringify(log.response, null, 2));
-				logger.debug(log);
+                //console.log(JSON.stringify(fullLog.response, null, 2));
+				fullLog.response.body = mergeAnthropicChunks(allchunk);
+				logAPI(fullLog);
                 controller.close();
             }
         });
@@ -98,12 +161,9 @@ function instrumentFetch() {
 
     } else {
         const res = await response.json();
-		//console.log(log);
-		//console.log(res);
-		log.response = res;
+		fullLog.response.body = res;
 		//执行响应日志打印
-		logger.debug(log);
-		console.log(log);
+		logAPI(fullLog);
         return new Response(JSON.stringify(res), {
             status: response.status,
             statusText: response.statusText,
@@ -113,5 +173,8 @@ function instrumentFetch() {
   };
   global.fetch.__ProxyInstrumented = true;
 }
-
-instrumentFetch();
+try{
+  instrumentFetch();
+}catch(e){
+    console.log(e);
+}

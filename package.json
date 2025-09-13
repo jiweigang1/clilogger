@@ -18,6 +18,7 @@
   "homepage": "https://github.com/jiweigang1/clilogger#readme",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.62.0",
     "pino": "^9.9.5",
     "rotating-file-stream": "^3.2.7"
   }
