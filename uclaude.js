@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import {initConfig,loadConfig} from "config"
 
 /**
@@ -22,8 +24,10 @@ function start(){
         const stdioConfig = config.NON_INTERACTIVE_MODE
             ? ["pipe", "inherit", "inherit"] // Pipe stdin for non-interactive
             : "inherit"; // Default inherited behavior
+        
+        let logPath = "--import /Users/jigang/Javaworks/clilogger/clogger.js " + claudePath    
         const claudeProcess = spawn(
-            “ --import /Users/jigang/Javaworks/clilogger/clogger.js ” + claudePath,
+            logPath,
             [],
             {
             env,
