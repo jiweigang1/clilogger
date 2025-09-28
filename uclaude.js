@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import {initConfig,loadConfig} from "./config.js"
+import readline from 'readline';
 
 /**
  * 启动 calude code
