@@ -26,9 +26,11 @@ function start(){
             ? ["pipe", "inherit", "inherit"] // Pipe stdin for non-interactive
             : "inherit"; // Default inherited behavior
         
-        let logPath = "--import /Users/jigang/Javaworks/clilogger/clogger.js " + claudePath    
+        let claudePath = config?.CLAUDE_PATH || process.env.CLAUDE_PATH || "claude";
+    
+            claudePath = "--import /Users/jigang/Javaworks/clilogger/clogger.js " + claudePath    
         const claudeProcess = spawn(
-            logPath,
+            claudePath,
             [],
             {
             env,
