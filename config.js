@@ -32,10 +32,11 @@ function getConfigDir(){
  * init config dir
  */
 export function initConfig(){
-  //如果路径不存在，创建    
-  if (!fs.existsSync(getConfigDir())){
+  //如果路径不存在，创建
+  let dir =  getConfigDir();   
+  if (!fs.existsSync(dir)){
       //创建初始化文件
-      fs.writeFileSync(filePath, JSON.stringify(defaultConfig));
+      fs.writeFileSync(dir, JSON.stringify(defaultConfig));
   } 
 }
 
