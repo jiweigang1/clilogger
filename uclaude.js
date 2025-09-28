@@ -10,6 +10,7 @@ function start(){
    initConfig();
    let allConfig = loadConfig();
   
+   console.log(allConfig);
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
