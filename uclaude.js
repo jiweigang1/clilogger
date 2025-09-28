@@ -61,3 +61,4 @@ function start(){
         rl.close();
     });
 }
+start();
