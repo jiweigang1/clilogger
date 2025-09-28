@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {initConfig,loadConfig} from "config"
+import {initConfig,loadConfig} from "config.js"
 
 /**
  * 启动 calude code
