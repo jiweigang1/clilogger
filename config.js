@@ -34,12 +34,12 @@ function getConfigDir(){
  */
 export function initConfig(){
   //如果路径不存在，创建    
-  f (!fs.existsSync(getConfigDir())){
+  if (!fs.existsSync(getConfigDir())){
       //创建初始化文件
       fs.writeFileSync(filePath, JSON.stringify(defaultConfig));
   } 
 }
-export function loadConfig(){
+ function loadConfig(){
    const data = fs.readFileSync(getConfigDir(), 'utf-8');
    return JSON.parse(data);
 }
