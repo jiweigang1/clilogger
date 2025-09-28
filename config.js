@@ -25,7 +25,7 @@ let defaultConfig = {
 
 function getConfigDir(){
   let home = os.homedir();
-  return path.join(home,[".clilogger","config.json"]);
+  return path.join(home, ".clilogger", "config.json");
 }
 
 /**
