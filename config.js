@@ -36,6 +36,7 @@ export function initConfig(){
   let dir =  getConfigDir();   
   if (!fs.existsSync(dir)){
       //创建初始化文件
+      fs.mkdirSync(path.dirname(dir), { recursive: true });
       fs.writeFileSync(dir, JSON.stringify(defaultConfig));
   } 
 }
