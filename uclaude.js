@@ -2,6 +2,7 @@
 
 import {initConfig,loadConfig} from "./config.js"
 import readline from 'readline';
+import { spawn } from 'child_process';
 
 /**
  * 启动 calude code
