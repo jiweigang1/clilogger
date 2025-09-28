@@ -16,7 +16,8 @@ function start(){
     });
 
     // 提供选项并让用户选择
-    rl.question('选择模型：1、deepseek ， 2、kimi、 3、openrouter', (answer) => {
+    rl.question("选择模型：1、deepseek ， 2、kimi、 3、openrouter", (answer) => {
+        console.log(allConfig);
         // 根据用户的输入判断选择
         var config = allConfig["deepseek"];
         let env =  config.env;
