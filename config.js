@@ -39,7 +39,8 @@ export function initConfig(){
       fs.writeFileSync(filePath, JSON.stringify(defaultConfig));
   } 
 }
- function loadConfig(){
+
+export  function loadConfig(){
    const data = fs.readFileSync(getConfigDir(), 'utf-8');
    return JSON.parse(data);
 }
