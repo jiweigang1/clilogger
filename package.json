@@ -2,6 +2,9 @@
   "name": "clilogger",
   "version": "1.0.0",
   "main": "clogger",
+  "bin":{
+    "uclaude":"uclaude.js" 
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
