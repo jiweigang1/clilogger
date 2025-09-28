@@ -48,15 +48,12 @@ function start(){
         claudeProcess.on("error", (error) => {
             console.error("Failed to start claude command:", error.message);
             console.log(
-            "Make sure Claude Code is installed: npm install -g @anthropic-ai/claude-code"
+                "Make sure Claude Code is installed: npm install -g @anthropic-ai/claude-code"
             );
-            decrementReferenceCount();
             process.exit(1);
         });
 
         claudeProcess.on("close", (code) => {
-            decrementReferenceCount();
-            closeService();
             process.exit(code || 0);
         });
 
