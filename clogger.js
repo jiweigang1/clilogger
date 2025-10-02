@@ -1,9 +1,8 @@
-import apiFullLogger,{apiSimpleLogger} from './logger.js';
 import mergeAnthropicChunks  from './api-anthropic.js';
 import LoggerManage from "./logger-manager.js" 
 let  logger = LoggerManage.getLogger("claudecode");
 
-apiFullLogger.debug("-------------Clogger Start--------------------------");
+logger.full.debug("-------------Clogger Start--------------------------");
 
 function deepClone(obj) {
   const result = JSON.parse(JSON.stringify(obj));
@@ -74,8 +73,6 @@ function instrumentFetch() {
   global.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 	
-    //console.log(url);
-
    //如果没有 body 不处理	
    if(typeof(init?.body) == "undefined"){
 	   return originalFetch(input,init);
@@ -98,11 +95,16 @@ function instrumentFetch() {
     });
 	
 	  const contentType = response.headers.get('content-type') || '';
-	  // 如果不是JSON返回格式不进行处理
-	  if(contentType !="application/json" && contentType !="text/event-stream"){
-		  //console.log(contentType);
-		  return response;
-	  }
+    const types = [
+		    'text/event-stream',
+        'application/json'
+	  ];
+    // 如果不是JSON返回格式不进行处理
+    //text/event-stream; charset=utf-8  注意后面会有参数，不能直接相等比较，要使用包含
+	  if(!types.some(t => contentType.includes(t))){
+       console.log(contentType + "不支持，直接返回");
+		   return response;
+    }
 	  
 	  //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{

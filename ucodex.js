@@ -1,11 +1,12 @@
-// server.js
-import Fastify from "fastify";
+#!/usr/bin/env node
+
 import TOML from '@iarna/toml';
 import path  from 'path';
 import os from 'os';
 import fs from "fs";
 import { spawn } from 'child_process';
-import { env } from "process";
+
+
 // 启动服务
 const startServer = async () => {
   let  tomlPath = path.join(os.homedir(), ".codex", "config.toml");

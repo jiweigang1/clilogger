@@ -1,62 +1,55 @@
 #!/usr/bin/env node
-import { initConfig, loadConfig } from './config.js'
-import startProxy from './openrouter.js'
-import './clogger.js'
 
-function printHelp() {
-  console.log(
-    [
-      'uclaude - start Codex proxy and logging',
-      '',
-      'Usage:',
-      '  uclaude                 Start proxy on PORT (default 3000)',
-      '  uclaude env             Print env exports for Codex CLI',
-      '  uclaude help            Show help',
-      '',
-      'Environment:',
-      '  PORT                    Port to listen on (default 3000)',
-      '  OPENROUTER_API_KEY      API key when using OpenRouter backend',
-      '  ANTHROPIC_PROXY_BASE_URL  Upstream base URL, skips API key header when set',
-    ].join('\n')
-  )
+import {initConfig,loadConfig} from "./config.js"
+import readline from 'readline';
+import { spawn } from 'child_process';
+import {getClaudePath} from './untils.js';
+
+/**
+ * 启动 calude code
+ */
+function start(){
+    initConfig();
+    let allConfig = loadConfig();
+   //console.log(allConfig);
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    // 提供选项并让用户选择
+    rl.question("选择模型：1、deepseek ， 2、kimi、 3、openrouter 请输入序号：\n", (answer) => {
+        //console.log(allConfig);
+        // 根据用户的输入判断选择
+        var config = allConfig["deepseek"];
+        let env =  config.env;
+        let claudePath = config?.CLAUDE_PATH || process.env.CLAUDE_PATH || getClaudePath();
+    
+            claudePath = "node --import ./clogger.js " + claudePath    
+
+            console.log(`启动 Claude 进程: ${claudePath}`);
+
+        const child = spawn(claudePath,[],{
+                env,
+                stdio: 'inherit', // 继承父进程 stdio，方便交互,
+                shell: true
+            }
+        );
+
+        child.on("error", (error) => {
+            console.error("Failed to start claude command:", error.message);
+            console.log(
+                "Make sure Claude Code is installed: npm install -g @anthropic-ai/claude-code"
+            );
+            process.exit(1);
+        });
+
+        child.on("close", (code) => {
+            process.exit(code || 0);
+        });
+
+         // 关闭接口
+        rl.close();
+    });
 }
-
-async function main() {
-  const cmd = process.argv[2] || 'start'
-  initConfig()
-  const cfg = loadConfig()
-
-  if (cmd === 'help' || cmd === '--help' || cmd === '-h') {
-    printHelp()
-    return
-  }
-
-  if (cmd === 'env') {
-    // Default to the local proxy and sonnet-4 mapping
-    const base = process.env.ANTHROPIC_BASE_URL || 'http://127.0.0.1:3000'
-    const model = process.env.ANTHROPIC_MODEL || 'anthropic/claude-sonnet-4'
-    const small = process.env.ANTHROPIC_SMALL_FAST_MODEL || model
-    const token = process.env.ANTHROPIC_AUTH_TOKEN || 'dummy'
-    // Windows PowerShell compatible output
-    console.log(`$env:ANTHROPIC_BASE_URL = '${base}'`)
-    console.log(`$env:ANTHROPIC_AUTH_TOKEN = '${token}'`)
-    console.log(`$env:ANTHROPIC_MODEL = '${model}'`)
-    console.log(`$env:ANTHROPIC_SMALL_FAST_MODEL = '${small}'`)
-    console.log('')
-    console.log('# For bash/zsh:')
-    console.log(`# export ANTHROPIC_BASE_URL='${base}'`)
-    console.log(`# export ANTHROPIC_AUTH_TOKEN='${token}'`)
-    console.log(`# export ANTHROPIC_MODEL='${model}'`)
-    console.log(`# export ANTHROPIC_SMALL_FAST_MODEL='${small}'`)
-    return
-  }
-
-  // Start the OpenRouter-style proxy (/v1/messages mapping to upstream chat/completions)
-  await startProxy()
-}
-
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})
-
+start();
