@@ -1,5 +1,7 @@
 import apiFullLogger,{apiSimpleLogger} from './logger.js';
-import mergeAnthropicChunks  from './api.js';
+import mergeAnthropicChunks  from './api-anthropic.js';
+import LoggerManage from "./logger-manager.js" 
+let  logger = LoggerManage.getLogger("claudecode");
 
 apiFullLogger.debug("-------------Clogger Start--------------------------");
 
@@ -14,34 +16,19 @@ function formateLine(str){
 function toSimpleLog(fullLog){
     //删除 tool 列表
     let  slog = deepClone(fullLog);
-    //input.replace(/\\n/g, '\n')
     let result = {
         request:slog.request.body.messages,
         response:slog.response.body.content
     };
-    /** 
-    result.request.forEach((message, index) => {
-        if(typeof message.content === "string"){
-             message.content = formateLine(message.content);
-        }else if(Array.isArray(message.content)){
-            message.content.forEach((content, index) => {
-                content.text = formateLine(content.text);
-            });
-        }
-    });
-    console.log(result);
-    */
-
     return result;
 }
 
 function logAPI(fullLog){
-    let slog = toSimpleLog(fullLog);
-    apiFullLogger.debug(fullLog);
-    apiSimpleLogger.debug(slog);
+    logger.full.debug(fullLog);
+    logger.simple.debug(toSimpleLog(fullLog));
     //要及时输出
-    apiFullLogger.flush();
-    apiSimpleLogger.flush();
+    logger.simple.flush();
+    logger.full.flush();
 }
 
 async function* streamGenerator(stream) {
@@ -87,7 +74,7 @@ function instrumentFetch() {
   global.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 	
-    console.log(url);
+    //console.log(url);
 
    //如果没有 body 不处理	
    if(typeof(init?.body) == "undefined"){
@@ -148,6 +135,7 @@ function instrumentFetch() {
                 }
                 //console.log(JSON.stringify(fullLog.response, null, 2));
 				fullLog.response.body = mergeAnthropicChunks(allchunk);
+                //console.log(JSON.stringify(fullLog, null, 2));
 				logAPI(fullLog);
                 controller.close();
             }
