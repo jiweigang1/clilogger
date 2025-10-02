@@ -2,8 +2,8 @@
   "name": "clilogger",
   "version": "1.0.0",
   "main": "clogger",
-  "bin":{
-    "uclaude":"uclaude.js" 
+  "bin": {
+    "uclaude": "uclaude.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,6 +22,8 @@
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",
+    "@iarna/toml": "^2.2.5",
+    "fastify": "^5.6.1",
     "pino": "^9.9.5",
     "rotating-file-stream": "^3.2.7"
   }

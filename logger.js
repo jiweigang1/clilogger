@@ -1,4 +1,4 @@
-const os = require('os');
+import os from 'os';
 import pino from 'pino';
 import fs from 'fs';
 import {createStream} from 'rotating-file-stream';
@@ -7,17 +7,16 @@ import path from 'path';
 
 //日志打印在用户目录下面
 //const __filename = fileURLToPath(import.meta.url);
-const __filename = os.homedir();
-console.log('User Home Directory:', userHomeDir);
-
-const __dirname = path.dirname(__filename);
+let homedir = os.homedir();
 //在用户目录下创建配置信息和日志输出
-const logDir = path.join(__dirname, '.clilogger');
-const logDir = path.join(__dirname, 'logs');
+let   logDir = path.join(homedir, '.clilogger','logs');
+
 //如果日志目录不存在进行创建
 if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
+     fs.mkdirSync(logDir, { recursive: true });
 }
+
+console.log('clilogger log Directory:', logDir);
 
 let timestamp = Date.now();
 

@@ -87,7 +87,7 @@ function instrumentFetch() {
   global.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 	
-    //console.log(url);
+    console.log(url);
 
    //如果没有 body 不处理	
    if(typeof(init?.body) == "undefined"){
