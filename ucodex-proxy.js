@@ -1,6 +1,6 @@
 // server.js
 import Fastify from "fastify";
-import {parseOpenAIResponse,parseOpenAIChatCompletion} from './api-codex.js'
+import {parseOpenAIResponse,parseOpenAIChatCompletion} from './api-opeai.js'
 import LoggerManage from "./logger-manager.js" 
 let  logger = LoggerManage.getLogger("codex");
 

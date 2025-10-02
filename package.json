@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "clogger",
   "bin": {
-    "uclaude": "uclaude.js"
+    "uclaude": "uclaude.js",
+    "ucodex":  "ucodex.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
