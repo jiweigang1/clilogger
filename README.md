@@ -14,6 +14,14 @@ clone 此项目，执行命令 npm link
 执行 ucodex 启动
 
 ## claude code router
+配置
+```
+"CLAUDE_PATH": "node --import file:D:\\Javaworks\\clilogger\\clogger.js C:\\Users\\gang.ji\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js",
+```
 
+>根据自己的安装路径进行修改
+
+执行 ccr code 启动
+  
 
 
