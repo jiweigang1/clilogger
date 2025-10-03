@@ -1,7 +1,9 @@
 // server.js
 import Fastify from "fastify";
+import { Readable } from 'node:stream';
 import {parseOpenAIResponse,parseOpenAIChatCompletion} from './api-opeai.js'
 import LoggerManage from "./logger-manager.js" 
+import {proxyResponse} from "./untils.js"
 let  logger = LoggerManage.getLogger("codex");
 
 //是否为 chat 模式调用
@@ -81,37 +83,6 @@ function headersToObject(headers) {
   return obj;
 }
 
-/**
- * SSE 解析器：event: ...\ndata: ...\n\n" 块解析成 { event, data } ---
- * SSE 是以空行分割
- * @param {*} stream 
- */
-async function* streamGenerator(stream) {
-    const reader = stream.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-           yield buffer;
-			     break;
-		    }
-
-        const event = decoder.decode(value, { stream: true });
-      
-        buffer += event;
-        //event 是以完整换行符 ，有换行符是完整的chunk
-        const lines = buffer.split('\n\n');
-        //最后一行可能是不完整的，等到最后一次处理
-        buffer = lines.pop();
-        //处理已经接收的完整 event 一次 read 得到多个chunk是正常的
-        for (const line of lines) {
-			    //返回原始文本,解析出日志的内容。
-			    yield line;
-        }
-    }
-}
-
 function joinUrl(base, ...paths) {
   return [base.replace(/\/+$/, ''), ...paths.map(p => p.replace(/^\/+/, ''))]
     .join('/');
@@ -130,13 +101,14 @@ async function handel(request, reply, endpoint){
     let url  = joinUrl(base_url,endpoint);
     console.log("向endpoint 发送请求：" + url);
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "POST",
       headers: incomingHeaders,
       body: JSON.stringify(body)
     });
 
-
+    response = proxyResponse(response);
+    //const [toClient, toLog] = response.body.tee();
 
      //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{
@@ -148,42 +120,39 @@ async function handel(request, reply, endpoint){
             headers: headersToObject(response.headers)
       }};
 
-   let headers = headersToObject(response.headers);
 
-    if(!isStream(response)){
-        console.log("处理非流式响应");
-        // 把外部响应头加到 reply
-        for (const [key, value] of response.headers.entries()) {
-            reply.header(key, value);
-        }
-        const res = await response.text();
-        return reply.send(res);
-    }else{
-        
-
-      // 使用 tee：一支直接转发字节，一支本地解析日志
-    const [toClient, toLog] = response.body.tee();
-
-    // 同时在后台解析日志（不影响直通）
+      // 同时在后台解析日志（不影响直通）
     (async () => {
       if(wire_api == "chat"){
-        fullLog.response.body =  await parseOpenAIChatCompletion(toLog.getReader());
+        fullLog.response.body =  await parseOpenAIChatCompletion(response.body.getReaderLog());
       }else if(wire_api == "responses"){
-        fullLog.response.body =  await parseOpenAIResponse(toLog.getReader());
+        fullLog.response.body =  await parseOpenAIResponse(response.body.getReaderLog());
       }
       //其他类型是错误的
       logAPI(fullLog,wire_api);
 
     })().catch(err => console.error('日志解析错误:', err));
 
-    // 直通上游字节给客户端：不要 decode/encode
-    return reply.send(toClient);
-       
+      const HOP_BY_HOP = new Set([
+        'connection', 'keep-alive', 'proxy-connection', 'transfer-encoding',
+        'te', 'trailer', 'upgrade', 'proxy-authenticate', 'proxy-authorization', 'expect'
+      ]);
 
-    }
+      reply.code(response.status);
+      response.headers.forEach((value, name) => {
+        const lower = name.toLowerCase();
+        if (HOP_BY_HOP.has(lower)) return;
+        reply.header(name, value);
+     });
+
+     if (response.body) {
+        const nodeStream = Readable.fromWeb(response.body);
+        return reply.send(nodeStream);
+     } else {
+        return reply.send();
+     }
   } catch (err) {
-     console.log("处理流式响应异常");
-     console.error(err);
+    console.error("处理流式响应异常",err);
     return reply.status(500).send({ error: "请求失败" });
   }
 }
