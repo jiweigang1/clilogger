@@ -67,6 +67,8 @@ function proxyBody(body){
                                 break;
                             }
                         }
+                        //释放锁
+                        reader.releaseLock();
                         return buffer;
                     };
                 }
