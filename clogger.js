@@ -1,5 +1,6 @@
 import mergeAnthropicChunks  from './api-anthropic.js';
 import LoggerManage from "./logger-manager.js" 
+import { URL } from 'url';
 let  logger = LoggerManage.getLogger("claudecode");
 
 logger.full.debug("-------------Clogger Start--------------------------");
@@ -63,7 +64,13 @@ function headersToObject(headers) {
   return obj;
 }
 
-// 输入和输出日志可以打印在一个 JSON 结构中
+/**
+ * 
+ *  
+ * 拦截 claude  code 请求，这里应该拦截模型情况。当前拦截了所有的请求，模型请求可以通过 endpoint 判断出来
+ * 当前的逻辑需要优化
+ * 
+ */
 function instrumentFetch() {
   if (!global.fetch || global.fetch.__ProxyInstrumented) return;
   
@@ -73,20 +80,16 @@ function instrumentFetch() {
   global.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 	
-   //如果没有 body 不处理	
-   if(typeof(init?.body) == "undefined"){
-	   return originalFetch(input,init);
-   }
-   
-   let obody = JSON.parse(init.body);
-   // events 类型不处理，后续需要研究
-   if(obody.events){
-	   return originalFetch(input,init);
-   }
-  
-   //console.log(obody);
-	
-	
+    const endpoints = [
+		    '/v1/messages'
+	  ];
+    let urlPath = (new URL(url)).pathname;
+
+    if(!(endpoints.some(t => urlPath.includes(t) && init.method == "POST"))){
+       console.log("不是模型请求直接返回" +init.method +":" + url +" -> " + urlPath);
+       return originalFetch(input,init);
+    }
+
     //打印请求信息 init.body
     const response = await originalFetch(url, {
       method: init.method,
@@ -102,7 +105,6 @@ function instrumentFetch() {
     // 如果不是JSON返回格式不进行处理
     //text/event-stream; charset=utf-8  注意后面会有参数，不能直接相等比较，要使用包含
 	  if(!types.some(t => contentType.includes(t))){
-       console.log(contentType + "不支持，直接返回");
 		   return response;
     }
 	  
@@ -111,7 +113,7 @@ function instrumentFetch() {
         url:url,
         method: init.method,
         headers: headersToObject(init.headers),
-        body: obody
+        body: JSON.parse(init.body)
       },response:{
             status: response.status,
             statusText: response.statusText,
@@ -121,29 +123,32 @@ function instrumentFetch() {
      //console.log(JSON.stringify(fullLog, null, 2));
 	  
 	  const streamTypes = [
-		'text/event-stream'
+		    'text/event-stream'
 	  ];
 	  const isStream = streamTypes.some(t => contentType.includes(t));
-	  
       if (isStream) {
+
+        //日志和返回内容分开处理提高性能
+        const [toClient, toLog] = response.body.tee();
+        console.log("开始处理日志");
         const transformedStream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder();
-				let allchunk = [];
-                for await (const chunk of streamGenerator(response.body)) {
-					allchunk.push(chunk);
-					let ck = encoder.encode(chunk);
+				        let allchunk = [];
+                for await (const chunk of streamGenerator(toLog)) {
+                    allchunk.push(chunk);
+                    let ck = encoder.encode(chunk);
                     controller.enqueue(ck);
                 }
-                //console.log(JSON.stringify(fullLog.response, null, 2));
-				fullLog.response.body = mergeAnthropicChunks(allchunk);
-                //console.log(JSON.stringify(fullLog, null, 2));
-				logAPI(fullLog);
+                  //console.log(JSON.stringify(fullLog.response, null, 2));
+                  fullLog.response.body = mergeAnthropicChunks(allchunk);
+                          //console.log(JSON.stringify(fullLog, null, 2));
+                  logAPI(fullLog);
                 controller.close();
             }
         });
 
-        return new Response(transformedStream, {
+        return new Response(toClient, {
             status: response.status,
             statusText: response.statusText,
             headers: response.headers

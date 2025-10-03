@@ -4,6 +4,7 @@ import {initConfig,loadConfig} from "./config.js"
 import readline from 'readline';
 import { spawn } from 'child_process';
 import {getClaudePath} from './untils.js';
+import inquirer from 'inquirer'
 
 /**
  * 启动 calude code
@@ -11,21 +12,29 @@ import {getClaudePath} from './untils.js';
 function start(){
     initConfig();
     let allConfig = loadConfig();
-   //console.log(allConfig);
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
+    let choices = [];
+    Object.entries(allConfig).forEach(([key, value], index) => {
+        choices.push({ name: `${index}. ${key}`, value: key });
     });
 
-    // 提供选项并让用户选择
-    rl.question("选择模型：1、deepseek ， 2、kimi、 3、openrouter 请输入序号：\n", (answer) => {
-        //console.log(allConfig);
-        // 根据用户的输入判断选择
-        var config = allConfig["deepseek"];
+    (async () => {
+        const answers = await inquirer.prompt([
+            {
+            type: "list",      // 单选模式
+            name: "choice",    // 返回结果的 key
+            message: "请选择一个模型：",
+            choices: choices
+            }
+        ]);
+
+        var config = allConfig[answers.choice];
         let env =  config.env;
         let claudePath = config?.CLAUDE_PATH || process.env.CLAUDE_PATH || getClaudePath();
-    
-            claudePath = "node --import ./clogger.js " + claudePath    
+        if(answers.choice=="openrouter"){
+            claudePath = "node --import ./clogger-openai.js " + claudePath 
+        }else{
+             claudePath = "node --import ./clogger.js " + claudePath 
+        } 
 
             console.log(`启动 Claude 进程: ${claudePath}`);
 
@@ -47,9 +56,11 @@ function start(){
         child.on("close", (code) => {
             process.exit(code || 0);
         });
+       
 
-         // 关闭接口
-        rl.close();
-    });
+    })();
+
+
+
 }
 start();

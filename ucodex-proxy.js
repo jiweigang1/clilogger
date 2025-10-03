@@ -35,7 +35,6 @@ function toSimple(full , wire_api){
 }
 
 function logAPI(fullLog,wire_api){
-  //console.log("API 请求日志:", JSON.stringify(fullLog, null, 2));
   logger.simple.debug(toSimple(fullLog,wire_api));
   logger.full.debug(fullLog);
 } 
@@ -130,6 +129,7 @@ async function handel(request, reply, endpoint){
     
     let url  = joinUrl(base_url,endpoint);
     console.log("向endpoint 发送请求：" + url);
+
     const response = await fetch(url, {
       method: "POST",
       headers: incomingHeaders,
@@ -164,22 +164,6 @@ async function handel(request, reply, endpoint){
       // 使用 tee：一支直接转发字节，一支本地解析日志
     const [toClient, toLog] = response.body.tee();
 
-    // 直通上游字节给客户端：不要 decode/encode
-    const passthrough = new ReadableStream({
-      async start(controller) {
-        const reader = toClient.getReader();
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            controller.enqueue(value); // 直接转发原始字节
-          }
-        } finally {
-          controller.close();
-        }
-      }
-    });
-
     // 同时在后台解析日志（不影响直通）
     (async () => {
       if(wire_api == "chat"){
@@ -188,16 +172,12 @@ async function handel(request, reply, endpoint){
         fullLog.response.body =  await parseOpenAIResponse(toLog.getReader());
       }
       //其他类型是错误的
-     
       logAPI(fullLog,wire_api);
 
     })().catch(err => console.error('日志解析错误:', err));
 
-    // Fastify 对 Web Stream 的支持因版本而异，必要时转换为 Node Readable：
-    // const { Readable } = await import('node:stream');
-    // return reply.send(Readable.fromWeb(passthrough));
-
-    return reply.send(passthrough);
+    // 直通上游字节给客户端：不要 decode/encode
+    return reply.send(toClient);
        
 
     }

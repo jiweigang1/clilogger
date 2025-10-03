@@ -4,7 +4,7 @@
   "main": "clogger",
   "bin": {
     "uclaude": "uclaude.js",
-    "ucodex":  "ucodex.js"
+    "ucodex": "ucodex.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,7 +25,9 @@
     "@anthropic-ai/sdk": "^0.62.0",
     "@iarna/toml": "^2.2.5",
     "fastify": "^5.6.1",
+    "inquirer": "^12.9.6",
     "pino": "^9.9.5",
-    "rotating-file-stream": "^3.2.7"
+    "rotating-file-stream": "^3.2.7",
+    "uuid": "^13.0.0"
   }
 }
