@@ -1,3 +1,6 @@
+export function mergeAnthropic(all){
+   return mergeAnthropicChunks(all.split("\n"));
+}
 /**
  * 将 Anthropic 流式 chunk（原始字符串数组）合并为完整响应消息体。
  * 兼容 chunk 形态：

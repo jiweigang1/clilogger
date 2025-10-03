@@ -28,56 +28,46 @@ export function getClaudePath(){
  * @returns 
  */
 function proxyBody(body){
+     // 初始化 readers 的辅助函数
+      function initReaders(target) {
+          if(!target["_readers"]){
+              const [toClient, toLog] = target.tee();
+              target["_readers"] = {
+                  toClient,
+                  toLog
+              }
+          }
+      }
         const handler = {
             get(target, prop, receiver) {
                 const value = Reflect.get(target, prop, receiver);
                 if(prop == "getReader"){
                     return () =>{
-                        if(!target["_readers"]){
-                            const [toClient, toLog] = target.tee();
-                            target["_readers"] = {
-                                toClient,
-                                toLog
-                            }
-                        }
+                        initReaders(target);
                         return target["_readers"].toClient.getReader();
                     };
                 }else if(prop == "getReaderLog"){
                     return() =>{
-                        if(!target["_readers"]){
-                            const [toClient, toLog] = target.tee();
-                            target["_readers"] = {
-                                toClient,
-                                toLog
-                            }
-                        }
+                        initReaders(target);
                         return target["_readers"].toLog.getReader();
                     };
                 }else if(prop == "readAllLog"){
-                    // 返回一个 Promise 来异步读取日志
                     return async () => {
                         //保证被初始化
-                        if(!target["_readers"]){
-                            const [toClient, toLog] = target.tee();
-                            target["_readers"] = {
-                                toClient,
-                                toLog
+                        initReaders(target);
+                        let reader = target["_readers"].toLog.getReader();
+                        const decoder = new TextDecoder('utf-8');
+                        let buffer = '';
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if(value){
+                                buffer += decoder.decode(value, { stream: true });
+                            }
+                            if (done) {
+                                break;
                             }
                         }
-                        const decoder = new TextDecoder();
-                        let result = "";
-                        const reader = target["_readers"].toLog.getReader();
-                        try {
-                            while (true) {
-                                const { done, value } = await reader.read();
-                                if (done) break;
-                                result += decoder.decode(value, { stream: true });
-                            }
-                            result += decoder.decode(); // 完成解码
-                        } finally {
-                            reader.releaseLock();
-                        }
-                        return result;
+                        return buffer;
                     };
                 }
 
@@ -85,6 +75,9 @@ function proxyBody(body){
                 return value;
             },
             set(obj, prop, value) {
+                if(prop == "locked"){
+                    return true;
+                }
                 obj[prop] = value;
                 return true; // 必须返回 true
             }
@@ -98,7 +91,7 @@ export function proxyResponse(response){
       const target = { name: "Alice", age: 25 };
         const handler = {
             get(obj, prop) {
-                //console.log(`读取属性: ${prop}`);
+                //console.log(`读取属�? ${prop}`);
                 if(prop == "body"){
                      // body 可能为空
                      if(!obj["body"]){
@@ -112,12 +105,14 @@ export function proxyResponse(response){
                 return obj[prop];
             },
             set(obj, prop, value) {
-                //console.log(`设置属性: ${prop} = ${value}`);
+                //console.log(`设置属�? ${prop} = ${value}`);
                 obj[prop] = value;
                 return true; // 必须返回 true
             }
         };
        return new Proxy(response, handler);
 }
+
+
 
 

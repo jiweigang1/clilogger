@@ -1,6 +1,8 @@
-import mergeAnthropicChunks  from './api-anthropic.js';
+import {mergeAnthropic}  from './api-anthropic.js';
 import LoggerManage from "./logger-manager.js" 
 import { URL } from 'url';
+import { proxyResponse } from './untils.js';
+import { Readable } from 'node:stream';
 let  logger = LoggerManage.getLogger("claudecode");
 
 logger.full.debug("-------------Clogger Start--------------------------");
@@ -91,12 +93,14 @@ function instrumentFetch() {
     }
 
     //打印请求信息 init.body
-    const response = await originalFetch(url, {
+    let response = await originalFetch(url, {
       method: init.method,
       headers: init.headers,
       body: init.body,
     });
 	
+    response = proxyResponse(response);
+
 	  const contentType = response.headers.get('content-type') || '';
     const types = [
 		    'text/event-stream',
@@ -120,51 +124,19 @@ function instrumentFetch() {
             headers: headersToObject(response.headers)
       }};
 
-     //console.log(JSON.stringify(fullLog, null, 2));
-	  
-	  const streamTypes = [
-		    'text/event-stream'
-	  ];
-	  const isStream = streamTypes.some(t => contentType.includes(t));
-      if (isStream) {
-
-        //日志和返回内容分开处理提高性能
-        const [toClient, toLog] = response.body.tee();
-        console.log("开始处理日志");
-        const transformedStream = new ReadableStream({
-            async start(controller) {
-                const encoder = new TextEncoder();
-				        let allchunk = [];
-                for await (const chunk of streamGenerator(toLog)) {
-                    allchunk.push(chunk);
-                    let ck = encoder.encode(chunk);
-                    controller.enqueue(ck);
-                }
-                  //console.log(JSON.stringify(fullLog.response, null, 2));
-                  fullLog.response.body = mergeAnthropicChunks(allchunk);
-                          //console.log(JSON.stringify(fullLog, null, 2));
-                  logAPI(fullLog);
-                controller.close();
-            }
-        });
-
-        return new Response(toClient, {
+      try{
+        let alllog = await response.body.readAllLog();
+        //logger.full.debug("alllog "+alllog)
+        fullLog.response.body = mergeAnthropic(alllog);     
+        logAPI(fullLog);
+      return new Response(Readable.fromWeb(response.body), {
             status: response.status,
             statusText: response.statusText,
             headers: response.headers
-        });
-
-    } else {
-        const res = await response.json();
-		fullLog.response.body = res;
-		//执行响应日志打印
-		logAPI(fullLog);
-        return new Response(JSON.stringify(res), {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers
-        });
-    }
+      });
+      }catch(e){
+        logger.full.error(e);
+      }
   };
   global.fetch.__ProxyInstrumented = true;
 }
