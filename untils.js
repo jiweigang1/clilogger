@@ -22,11 +22,13 @@ export function getCloggerFileURL(){
 export function getClaudePath(){
      return path.join(getGlobalNpmPath(),'@anthropic-ai',"claude-code","cli.js");
 }
+
+
 /**
  * 代理 body 对象
  * @param {*} body 
  * @returns 
- */
+ 
 function proxyBody(body){
      // 初始化 readers 的辅助函数
       function initReaders(target) {
@@ -40,6 +42,7 @@ function proxyBody(body){
       }
         const handler = {
             get(target, prop, receiver) {
+                console.log(prop);
                 const value = Reflect.get(target, prop, receiver);
                 if(prop == "getReader"){
                     return () =>{
@@ -71,6 +74,11 @@ function proxyBody(body){
                         reader.releaseLock();
                         return buffer;
                     };
+                // 当前 body 自身是不会被锁的，只能锁  tee  流 
+                }else if(prop == "locked"){
+                    return false
+                }else if(prop ){
+
                 }
 
 
@@ -86,7 +94,11 @@ function proxyBody(body){
         };
        return new Proxy(body, handler);
 }
-
+*/
+/**
+ * 
+ * @param {*} response 
+ * @returns 
 
 // 代理 Response 请求
 export function proxyResponse(response){
@@ -115,6 +127,6 @@ export function proxyResponse(response){
        return new Proxy(response, handler);
 }
 
-
+ */
 
 

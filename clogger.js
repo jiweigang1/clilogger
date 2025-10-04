@@ -1,7 +1,6 @@
 import {mergeAnthropic}  from './api-anthropic.js';
 import LoggerManage from "./logger-manager.js" 
 import { URL } from 'url';
-import { proxyResponse } from './untils.js';
 import { Readable } from 'node:stream';
 let  logger = LoggerManage.getLogger("claudecode");
 
@@ -99,7 +98,8 @@ function instrumentFetch() {
       body: init.body,
     });
 	
-    response = proxyResponse(response);
+    //response = proxyResponse(response);
+    let responseToClient = response.clone()
 
 	  const contentType = response.headers.get('content-type') || '';
     const types = [
@@ -125,15 +125,21 @@ function instrumentFetch() {
       }};
 
       try{
-        let alllog = await response.body.readAllLog();
-        //logger.full.debug("alllog "+alllog)
-        fullLog.response.body = mergeAnthropic(alllog);     
-        logAPI(fullLog);
-      return new Response(Readable.fromWeb(response.body), {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers
-      });
+          //日志解析要异步执行保证效率
+          (async ()=>{
+            let alllog = await response.text();
+            //logger.full.debug("alllog "+alllog)
+            fullLog.response.body = mergeAnthropic(alllog);     
+            logAPI(fullLog);
+          })().catch(err => console.error('日志解析错误:', err));
+        
+
+
+        return new Response(responseToClient.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers
+        });
       }catch(e){
         logger.full.error(e);
       }

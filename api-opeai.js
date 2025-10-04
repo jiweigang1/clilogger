@@ -98,16 +98,16 @@ async function  readAll(reader){
 /**
  * 通过流进行读取
  * 这个流最好是 fork 的一份，不要影响输出
- */
-export async function  parseOpenAIResponse(reader){
+ 
+ async function  parseOpenAIResponse(reader){
   const buffer = await readAll(reader);
   return _parseResponseObject(buffer);
 }
-
+*/
 /**
  * 直接转换所有文本
  */
-function _parseResponseObject(body){
+export async function  parseOpenAIResponse(body){
    return mergeOpenAIResponseEvents(body.split('\n\n'));
 }
 
@@ -412,16 +412,16 @@ const text = firstMsg?.content?.find?.(p => p.type === 'output_text')?.text ?? '
 /**
  * 通过流进行读取
  * 这个流最好是 fork 的一份，不要影响输出
- */
+ 
 export async function  parseOpenAIChatCompletion(reader){
   const buffer = await readAll(reader);
   return _parseOpenAIChatCompletion(buffer);
 }
-
+*/
 /**
  * 直接转换所有文本
  */
-function _parseOpenAIChatCompletion(body){
+export async function parseOpenAIChatCompletion(body){
    return mergeOpenAIChatCompletionEvents(body.split('\n\n'));
 }
 

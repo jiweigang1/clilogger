@@ -4,7 +4,9 @@ import {initConfig,loadConfig} from "./config.js"
 import readline from 'readline';
 import { spawn } from 'child_process';
 import {getClaudePath} from './untils.js';
-import inquirer from 'inquirer'
+import inquirer from 'inquirer';
+import path  from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 
 /**
  * 启动 calude code
@@ -30,11 +32,12 @@ function start(){
         var config = allConfig[answers.choice];
         let env =  config.env;
         let claudePath = config?.CLAUDE_PATH || process.env.CLAUDE_PATH || getClaudePath();
+        let dir = path.dirname(fileURLToPath(import.meta.url));
         if(answers.choice=="openrouter"){
-            claudePath = "node --import ./clogger-openai.js " + claudePath 
+            claudePath = "node --import " + pathToFileURL(path.join(dir, 'clogger-openai.js')) + " " + claudePath;
         }else{
-             claudePath = "node --import ./clogger.js " + claudePath 
-        } 
+             claudePath = "node --import "+ pathToFileURL(path.join(dir, 'clogger.js')) + " " + claudePath;
+        }
 
             console.log(`启动 Claude 进程: ${claudePath}`);
 

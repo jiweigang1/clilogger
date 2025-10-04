@@ -1,9 +1,8 @@
 // server.js
 import Fastify from "fastify";
-import { Readable } from 'node:stream';
+import {Readable } from 'node:stream';
 import {parseOpenAIResponse,parseOpenAIChatCompletion} from './api-opeai.js'
 import LoggerManage from "./logger-manager.js" 
-import {proxyResponse} from "./untils.js"
 let  logger = LoggerManage.getLogger("codex");
 
 //是否为 chat 模式调用
@@ -107,9 +106,8 @@ async function handel(request, reply, endpoint){
       body: JSON.stringify(body)
     });
 
-    response = proxyResponse(response);
-    //const [toClient, toLog] = response.body.tee();
-
+    let responseToClient = response.clone();
+    
      //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{
         headers: incomingHeaders,
@@ -121,12 +119,12 @@ async function handel(request, reply, endpoint){
       }};
 
 
-      // 同时在后台解析日志（不影响直通）
+    // 同时在后台解析日志（不影响直通）
     (async () => {
       if(wire_api == "chat"){
-        fullLog.response.body =  await parseOpenAIChatCompletion(response.body.getReaderLog());
+        fullLog.response.body =  await parseOpenAIChatCompletion(await response.text());
       }else if(wire_api == "responses"){
-        fullLog.response.body =  await parseOpenAIResponse(response.body.getReaderLog());
+        fullLog.response.body =  await parseOpenAIResponse(await response.text());
       }
       //其他类型是错误的
       logAPI(fullLog,wire_api);
@@ -146,7 +144,7 @@ async function handel(request, reply, endpoint){
      });
 
      if (response.body) {
-        const nodeStream = Readable.fromWeb(response.body);
+        const nodeStream = Readable.fromWeb(responseToClient.body);
         return reply.send(nodeStream);
      } else {
         return reply.send();
