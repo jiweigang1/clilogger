@@ -209,7 +209,7 @@ class AnthropicTransformer {
       const convertedStream = await this.convertOpenAIStreamToAnthropic(
         response.body
       );
-      console.log("转换后的流:", convertedStream);
+      //console.log("转换后的流:", convertedStream);
       return new Response(convertedStream, {
         headers: {
           "Content-Type": "text/event-stream",
@@ -219,7 +219,7 @@ class AnthropicTransformer {
       });
     } else {
       const data = await response.json();
-      console.log("转换后的非流式响应:", data);
+      //console.log("转换后的非流式响应:", data);
       const anthropicResponse = this.convertOpenAIResponseToAnthropic(data);
       return new Response(JSON.stringify(anthropicResponse), {
         headers: { "Content-Type": "application/json" },

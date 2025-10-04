@@ -96,17 +96,8 @@ function instrumentFetch() {
       body: openaiRequestBodyString,
     });
 
-      //console.log("请求地址完成-->: " + url);
-      //console.log({
-      //  "Content-Type": "application/json",
-      //  Authorization: `Bearer ${process.env.ANTHROPIC_AUTH_TOKEN}`
-      //})
-	
-
-    //for (const [key, value] of response.headers.entries()) {
-    //    console.log(`${key}: ${value}`);
-    //}
-
+    let toClient = response.clone();
+    
 	  const contentType = response.headers.get('content-type') || '';
     const types = [
 		    'text/event-stream',
@@ -115,7 +106,7 @@ function instrumentFetch() {
     // 如果不是JSON返回格式不进行处理
     //text/event-stream; charset=utf-8  注意后面会有参数，不能直接相等比较，要使用包含
 	  if(!types.some(t => contentType.includes(t))){
-      let text = await response.text();
+      let text = await toClient.text();
       console.log("返回结果无法处理: " + url + " " + contentType + "\n -> " + text);
       return new Response(text, {
             status: response.status,
@@ -136,42 +127,18 @@ function instrumentFetch() {
             headers: headersToObject(response.headers)
       }};
 
-     //console.log(JSON.stringify(fullLog, null, 2));
-	  
-	  const streamTypes = [
-		    'text/event-stream'
-	  ];
-	  const isStream = streamTypes.some(t => contentType.includes(t));
-    if (isStream) {
-        //console.log("返回为流式请求");
-        //日志和返回内容分开处理提高性能
-        const [toClient, toLog] = response.body.tee();
-         // 同时在后台解析日志（不影响直通）
-        (async () => {
-          fullLog.response.body =  await parseOpenAIChatCompletion(toLog.getReader());
-          //其他类型是错误的
-          logAPI(fullLog);
     
-        })().catch(err => console.error('日志解析错误:', err));
 
-        //console.log("开始流式请求转换");
-        return await anthropicTransformer.transformResponseIn(toClient);
-    
-    //非流式请求处理   
-    } else {
-        //console.log("开始请求转换，当前不是流式请求");
-        const data = await response.json();
-		    //fullLog.response.body = res;
-		    //执行响应日志打印
-		    //logAPI(fullLog);
-        //return await anthropicTransformer.transformResponseIn(toClient);
-        //const data = await toClient.json();
-        //console.log("转换后的非流式响应->:", data);
-        const anthropicResponse =  anthropicTransformer.convertOpenAIResponseToAnthropic(data);
-        return new Response(JSON.stringify(anthropicResponse), {
-          headers: { "Content-Type": "application/json" },
-        });
-    }
+    (async () => {
+      fullLog.response.body =  await parseOpenAIChatCompletion(await response.text());
+      //其他类型是错误的
+      logAPI(fullLog);
+
+    })().catch(err => console.error('日志解析错误:', err));
+
+    return await anthropicTransformer.transformResponseIn(toClient);
+	  
+	 
   };
   global.fetch.__ProxyInstrumented = true;
 }
