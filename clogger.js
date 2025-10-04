@@ -32,31 +32,6 @@ function logAPI(fullLog){
     logger.full.flush();
 }
 
-async function* streamGenerator(stream) {
-    const reader = stream.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-			break;
-		}
-
-        const chunk = decoder.decode(value, { stream: true });
-      
-        buffer += chunk;
-        //chunk 是以换行符分割 chunk的，有换行符是完整的chunk
-        const lines = buffer.split('\n');
-        //最后一行可能是不完整的，等到最后一次处理
-        buffer = lines.pop();
-        //处理已经接收的完整 chunk 一次read 得到多个chunk是正常的
-        for (const line of lines) {
-			 //返回原始文本,解析出日志的内容。
-			 yield line;
-        }
-    }
-}
-
 function headersToObject(headers) {
   const obj = {};
   try {
@@ -87,7 +62,7 @@ function instrumentFetch() {
     let urlPath = (new URL(url)).pathname;
 
     if(!(endpoints.some(t => urlPath.includes(t) && init.method == "POST"))){
-       console.log("不是模型请求直接返回" +init.method +":" + url +" -> " + urlPath);
+       logger.system.debug("不是模型请求直接返回" +init.method +":" + url +" -> " + urlPath);
        return originalFetch(input,init);
     }
 
