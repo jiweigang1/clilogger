@@ -4,7 +4,7 @@ import { URL } from 'url';
 import { Readable } from 'node:stream';
 let  logger = LoggerManage.getLogger("claudecode");
 
-logger.full.debug("-------------Clogger Start--------------------------");
+logger.system.debug("-------------Clogger Start--------------------------");
 
 function deepClone(obj) {
   const result = JSON.parse(JSON.stringify(obj));

@@ -57,10 +57,14 @@ class LogManager {
     
   }
   getLogger(cliType, full=true) {
+     if(!this.allLoggers["_system"]){
+        this.allLoggers["_system"] = this.__createLogger("system", false);
+     }
      if(!this.allLoggers[cliType]){
         this.allLoggers[cliType] = {
             full:this.__createLogger(cliType, full),
             simple:this.__createLogger(cliType, false),
+            system:this.allLoggers["_system"]
         }
      }
      return this.allLoggers[cliType];
