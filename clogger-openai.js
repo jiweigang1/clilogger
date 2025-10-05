@@ -1,4 +1,4 @@
-import mergeAnthropicChunks  from './api-anthropic.js';
+import {mergeAnthropic}  from './api-anthropic.js';
 import LoggerManage from "./logger-manager.js" 
 import { URL } from 'url';
 import anthropicTransformer from  "./anthropic-transformer.js"
@@ -18,19 +18,24 @@ function formateLine(str){
 function toSimpleLog(full, wire_api = "chat"){
    let log = {
       request:{},
-      response:{}
+      response:{},
+      openai:{
+        request:{},
+        response:{}
+      }
   }
-  if(wire_api === "chat"){
+    //anthropic 转换
     log.request.model = full.request.body.model;
     log.request.messages = full.request.body.messages;
-    log.response.choices = full.response.body.choices;
-  }else{
-    log.request.session_id = full.request.headerssession_id;
-    log.request.model = full.request.body.model;
-    log.request.instructions = full.request.body.instructions;
-    log.request.input = full.request.body.input;
-    log.response.output = full.response.body.output;
-  }
+    log.request.system = full.request.body.system;
+    log.response.content = full.response.body.content;
+
+    // openai 转换
+    log.openai.request.model = full.openai.request.body.model;
+    log.openai.request.messages = full.openai.request.body.messages;
+    log.openai.response.choices = full.openai.response.body.choices;
+
+
   return log; 
 }
 
@@ -120,23 +125,32 @@ function instrumentFetch() {
         url:url,
         method: init.method,
         headers: headersToObject(init.headers),
-        body: requestBody
+        body: initBody
       },response:{
             status: response.status,
             statusText: response.statusText,
             headers: headersToObject(response.headers)
+      },openai:{
+        request: {
+           body: requestBody
+        },
+        response: {}
       }};
 
-    
+    let         res = await anthropicTransformer.transformResponseIn(toClient);
+    let toClientRes = await res.clone();
 
     (async () => {
-      fullLog.response.body =  await parseOpenAIChatCompletion(await response.text());
+       
+      fullLog.openai.response.body  =  await parseOpenAIChatCompletion(await response.text());
+      fullLog.response.body  =  mergeAnthropic(await res.text());
+
       //其他类型是错误的
       logAPI(fullLog);
 
     })().catch(err => console.error('日志解析错误:', err));
 
-    return await anthropicTransformer.transformResponseIn(toClient);
+    return toClientRes;
 	  
 	 
   };
