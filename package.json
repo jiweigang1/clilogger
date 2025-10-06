@@ -24,6 +24,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",
     "@iarna/toml": "^2.2.5",
+    "@modelcontextprotocol/sdk": "^1.19.1",
     "fastify": "^5.6.1",
     "inquirer": "^12.9.6",
     "pino": "^9.9.5",

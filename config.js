@@ -61,3 +61,39 @@ export  function loadConfig(){
    const data = fs.readFileSync(getConfigDir(), 'utf-8');
    return JSON.parse(data);
 }
+
+
+
+let defaultMCPConfig = {
+  "mcpServers": {
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp",
+      "bearer_token":"sbp_xxxxx"
+    }
+  }
+
+}
+
+
+function getMCPConfigDir(){
+  let home = os.homedir();
+  return path.join(home, ".clilogger", "mcp.json");
+}
+
+/**
+ * init config dir
+ */
+export function initMCPConfig(){
+  //如果路径不存在，创建
+  let dir =  getMCPConfigDir();   
+  if (!fs.existsSync(dir)){
+      //创建初始化文件
+      fs.mkdirSync(path.dirname(dir), { recursive: true });
+      fs.writeFileSync(dir, JSON.stringify(defaultMCPConfig,null, 2));
+  } 
+}
+
+export  function loadMCPConfig(){
+   const data = fs.readFileSync(getMCPConfigDir(), 'utf-8');
+   return JSON.parse(data);
+}

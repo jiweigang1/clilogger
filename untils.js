@@ -128,5 +128,18 @@ export function proxyResponse(response){
 }
 
  */
-
+/**
+ * 
+ */
+export function getOptions(){
+    const args = process.argv.slice(2);
+    const options = {};
+    args.forEach(arg => {
+    if (arg.startsWith('--')) {
+        const [key, value = true] = arg.slice(2).split('=');
+        options[key] = value;
+    }
+    });
+  return options;
+};
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import TOML from '@iarna/toml';
-import path  from 'path';
+import path  from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 import os from 'os';
 import fs from "fs";
 import { spawn } from 'child_process';
@@ -29,8 +30,8 @@ const startServer = async () => {
      }
   }
 
-
-  const child = spawn('node ./ucodex-proxy.js', [],{
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  const child = spawn('node ' + path.join(dir, 'ucodex-proxy.js'), [],{
     stdio: ['ignore', 'pipe', 'pipe'],
     shell: true,
     env:{
