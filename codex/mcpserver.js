@@ -149,30 +149,45 @@ const respond = (sock, id, result, error) => {
   sock.write(JSON.stringify(msg) + '\n');
 };
 
-net.createServer((socket) => {
-  let buf = '';
-  socket.on('data', (chunk) => {
-    buf += chunk;
-    for (let i = buf.indexOf('\n'); i >= 0; i = buf.indexOf('\n')) {
-      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-      console.log("Received line:", line);
-      if (!line) continue;
-
-      let req;
-      try { req = JSON.parse(line); }
-      catch { return respond(socket, null, null, 'Parse error: invalid JSON'); }
-
-      const { jsonrpc, id, method, params } = req ?? {};
-      if (jsonrpc !== '2.0' || typeof method !== 'string' || !('id' in (req ?? {}))) {
-        return respond(socket, ('id' in (req ?? {})) ? id : null, null, 'Invalid JSON-RPC request');
-      }
-
-      Promise.resolve(handle(req.method, req.params, req.id, socket))
-        .then((res) => respond(socket, id, res))
-        .catch((err) => respond(socket, id, null, err?.message || err));
+export function startMCPServerProxy(){
+   let start = false
+   for(const key in mcpConfig.mcpServers){
+        if(key){
+          start =true;
+          break;
+        }
     }
+
+  if(!start){
+    console.log("当前没有配置 MCP Server ，无需启动代理服务。");
+    return;
+  }  
+
+  net.createServer((socket) => {
+    let buf = '';
+    socket.on('data', (chunk) => {
+      buf += chunk;
+      for (let i = buf.indexOf('\n'); i >= 0; i = buf.indexOf('\n')) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        console.log("Received line:", line);
+        if (!line) continue;
+
+        let req;
+        try { req = JSON.parse(line); }
+        catch { return respond(socket, null, null, 'Parse error: invalid JSON'); }
+
+        const { jsonrpc, id, method, params } = req ?? {};
+        if (jsonrpc !== '2.0' || typeof method !== 'string' || !('id' in (req ?? {}))) {
+          return respond(socket, ('id' in (req ?? {})) ? id : null, null, 'Invalid JSON-RPC request');
+        }
+
+        Promise.resolve(handle(req.method, req.params, req.id, socket))
+          .then((res) => respond(socket, id, res))
+          .catch((err) => respond(socket, id, null, err?.message || err));
+      }
+    });
+    socket.on('error', () => {});
+  }).listen(PIPE_PATH, () => {
+    console.log('JSON-RPC server listening on', PIPE_PATH);
   });
-  socket.on('error', () => {});
-}).listen(PIPE_PATH, () => {
-  console.log('JSON-RPC server listening on', PIPE_PATH);
-});
+}

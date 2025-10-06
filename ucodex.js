@@ -6,9 +6,11 @@ import { fileURLToPath, pathToFileURL } from "url";
 import os from 'os';
 import fs from "fs";
 import { spawn } from 'child_process';
+import {startMCPServerProxy} from "./codex/mcpserver.js"
 
-
-// 启动服务
+/**
+ * codex 是 rust 开发，只能使用代理模式进行日志获取
+ */
 const startServer = async () => {
   let  tomlPath = path.join(os.homedir(), ".codex", "config.toml");
   const tomlString = fs.readFileSync(tomlPath, 'utf-8');
@@ -95,6 +97,7 @@ function startCodexcli(){
 
 function  main(){
    startServer();
+   startMCPServerProxy()
 	 startCodexcli();
 }
 main();
