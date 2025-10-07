@@ -1,4 +1,5 @@
 import JsonRpcClient from "./mcpclient.js"
+import { pathToFileURL } from "url";
 import readline from 'node:readline';
 import {getOptions} from "../untils.js"
 
@@ -42,7 +43,7 @@ async function handleRequest({ id, method, params }) {
       );
       */
         let res = await mcpclient.call(`${mcpServerName}_initialize`);
-        console.log(res);
+        //console.log(res);
         return send(ok(res), id);
     }
 
@@ -96,6 +97,33 @@ process.on('unhandledRejection', (e) => console.error('unhandled:', e));
 //console.log(`mcpclient.call('${mcpServerName}_list')`);
 //let tools = await mcpclient.call(`${mcpServerName}_list`);
 //console.log(JSON.stringify(tools, null, 2));
+async function main(){
+  let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
+   console.log(JSON.stringify(initialize, null, 2));
+}
 
-//let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
-//console.log(JSON.stringify(initialize, null, 2));
+/**
+ * 判断当前模块是否是主运行模块：
+ * ✅ node xxx.js 直接执行 → true
+ * 🚫 import 时 → false
+ * 🚫 子进程 (spawn/fork) 启动时 → false
+ */
+export function isMainModule() {
+  // 当前模块文件 URL
+  const currentFile = pathToFileURL(process.argv[1]).href;
+
+  // 是否为直接运行
+  const isDirectRun = import.meta.url === currentFile;
+
+  // 是否为子进程
+  const isChildProcess =
+    process.send !== undefined ||
+    process.env.__IS_SUBPROCESS__ === "1" ||
+    (process.ppid !== 1 && process.ppid !== process.pid);
+
+  return isDirectRun && !isChildProcess;
+}
+
+if(isMainModule()){
+  main();
+}

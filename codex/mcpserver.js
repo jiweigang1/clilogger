@@ -1,4 +1,5 @@
 import net from 'node:net';
+import { pathToFileURL } from "url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -112,20 +113,20 @@ function getMCPNameMethod(method){
     }
     res.name   = method.split("_")[0];
     res.method = method.substring(res.name.length + 1);
-    console.log(res.name);
+    //console.log(res.name);
     res.mcpClient = getMCPClient(res.name);
-    console.log(">>"+res.mcpClient);
+    //console.log(">>"+res.mcpClient);
     return res;
 }
 
 
 // 用户实现：统一请求处理器（返回值作为 result，抛错则作为 error）
 export async function handle(methodfull, params, id, socket ) {
-  console.log("Handling request:", { methodfull, params, id });
+  //console.log("Handling request:", { methodfull, params, id });
   let {mcpClient,method} = getMCPNameMethod(methodfull);
-
   if (method === 'initialize'){
     //新版本已经在 await client.connect(transport); 完成协商，不需要处理
+    //这里是可以通过 
     if(mcpClient.initialize){
       return await mcpClient.initialize({
               clientInfo: {
@@ -141,11 +142,12 @@ export async function handle(methodfull, params, id, socket ) {
     }else{
        let initialize = {
           //不知道怎么获取
-          "protocolVersion":"2025-03-26",
+          "protocolVersion":mcpClient.transport.protocolVersion?mcpClient.transport.protocolVersion:"2025-03-26",
           "serverInfo": mcpClient.getServerVersion(),
-          "capabilities": mcpClient.getServerCapabilities()
+          "capabilities": mcpClient.getServerCapabilities(),
+          "instructions": mcpClient["_instructions"]? mcpClient["_instructions"]:""
        };
-       console.log("Initialize1:", JSON.stringify(initialize, null, 2));
+       //console.log("Initialize1:", JSON.stringify(initialize, null, 2));
        return initialize;
     }
      
@@ -191,7 +193,7 @@ export function startMCPServerProxy(){
       buf += chunk;
       for (let i = buf.indexOf('\n'); i >= 0; i = buf.indexOf('\n')) {
         const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-        console.log("Received line:", line);
+        //console.log("Received line:", line);
         if (!line) continue;
 
         let req;
@@ -212,4 +214,35 @@ export function startMCPServerProxy(){
   }).listen(PIPE_PATH, () => {
     console.log('JSON-RPC server listening on', PIPE_PATH);
   });
+}
+
+function main() {
+  console.log('Starting MCP Server Proxy...');
+  startMCPServerProxy();
+}
+
+/**
+ * 判断当前模块是否是主运行模块：
+ * ✅ node xxx.js 直接执行 → true
+ * 🚫 import 时 → false
+ * 🚫 子进程 (spawn/fork) 启动时 → false
+ */
+export function isMainModule() {
+  // 当前模块文件 URL
+  const currentFile = pathToFileURL(process.argv[1]).href;
+
+  // 是否为直接运行
+  const isDirectRun = import.meta.url === currentFile;
+
+  // 是否为子进程
+  const isChildProcess =
+    process.send !== undefined ||
+    process.env.__IS_SUBPROCESS__ === "1" ||
+    (process.ppid !== 1 && process.ppid !== process.pid);
+
+  return isDirectRun && !isChildProcess;
+}
+
+if(isMainModule()){
+  main();
 }

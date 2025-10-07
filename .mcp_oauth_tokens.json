@@ -1,0 +1,48 @@
+{
+  "meta|https://radar.mcp.cloudflare.com": {
+    "issuer": "https://radar.mcp.cloudflare.com",
+    "authorization_endpoint": "https://radar.mcp.cloudflare.com/oauth/authorize",
+    "token_endpoint": "https://radar.mcp.cloudflare.com/token",
+    "registration_endpoint": "https://radar.mcp.cloudflare.com/register",
+    "response_types_supported": [
+      "code"
+    ],
+    "response_modes_supported": [
+      "query"
+    ],
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_basic",
+      "client_secret_post",
+      "none"
+    ],
+    "revocation_endpoint": "https://radar.mcp.cloudflare.com/token",
+    "code_challenge_methods_supported": [
+      "plain",
+      "S256"
+    ]
+  },
+  "reg|https://radar.mcp.cloudflare.com|http://127.0.0.1:53175/callback": {
+    "client_id": "yfd3ut5QdihBkS8M",
+    "obtained_at": 1759852822832
+  },
+  "tokens|https://radar.mcp.cloudflare.com|2l79knMQWnmBgJgG": {
+    "access_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:plITnaxUTcvmfaWh:Hi6WSIGvuG972VaGcO3HPuxqQ2YJ7koT",
+    "token_type": "bearer",
+    "expires_in": 3600,
+    "refresh_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:plITnaxUTcvmfaWh:AUdvdFxy5xiBfM0oYtI7WCCzuFvw6XPI",
+    "scope": "user:read offline_access account:read radar:read url_scanner:write",
+    "expires_at": 1759856174726
+  },
+  "tokens|https://radar.mcp.cloudflare.com|yfd3ut5QdihBkS8M": {
+    "access_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:nT3fPLMfUh9S41Gw:XDD7igJHZjrTszDxs5z9URxYZpf9YpjZ",
+    "token_type": "bearer",
+    "expires_in": 3600,
+    "refresh_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:nT3fPLMfUh9S41Gw:AFEGZTvrWdBgWMb1SHCKigaPqB5GYNoR",
+    "scope": "user:read offline_access account:read radar:read url_scanner:write",
+    "expires_at": 1759856477458
+  }
+}

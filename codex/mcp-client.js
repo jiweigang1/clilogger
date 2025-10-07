@@ -163,7 +163,10 @@ class OAuthManager {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
-    if (!resp.ok) throw new Error(`Client registration failed: ${resp.status}`)
+    if (!resp.ok) {
+      console.error('[oauth] client registration failed:', await resp.text())
+      throw new Error(`Client registration failed: ${resp.status}`)
+    }
     const json = await resp.json()
     this.clientId = json.client_id
     const regKey = `reg|${this.authorizationUrl.origin}|${this.redirectUri.href}`
@@ -245,7 +248,8 @@ class OAuthManager {
       client_id: this.clientId,
       code_verifier: verifier,
     })
-
+    
+    //这里获取失败 
     const resp = await fetch(this.tokenUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
     if (!resp.ok) {
          console.error('[oauth] token exchange failed url:', this.tokenUrl + "");
@@ -318,12 +322,93 @@ export class StreamableHTTPClientTransport {
     this.seq = 0
   }
 
+  // 在文件顶部或类里工具函数处加上：
+async  readJSONorSSE(resp) {
+  const ct = (resp.headers.get('content-type') || '').toLowerCase()
+  if (ct.startsWith('application/json')) {
+    return await resp.json()
+  }
+  if (!ct.startsWith('text/event-stream')) {
+    // 兜底：不是 JSON 也不是 SSE，就按文本丢错
+    const text = await resp.text().catch(() => '')
+    console.log(`Unsupported content-type: ${ct}. Body: ${text}`);
+    return {result: {}, jsonrpc: '2.0'}
+    //throw new Error(`Unsupported content-type: ${ct}. Body: ${text}`)
+  }
+
+  // === 解析 SSE ===
+  const reader = resp.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let lastJson = null
+
+  const flushEvent = (evt) => {
+    // evt 可能包含多行 data:，把它们拼起来
+    const payload = (evt.data || []).join('\n')
+    if (!payload) return
+    try {
+      const obj = JSON.parse(payload)
+      // 只关心 JSON-RPC 完整消息；中间进度事件可按需处理
+      if (obj?.jsonrpc === '2.0' && (obj.result || obj.error || obj.id !== undefined)) {
+        lastJson = obj
+      }
+    } catch {
+      // 不是 JSON 的心跳/注释，忽略
+    }
+  }
+
+  let evt = { event: null, data: [] } // 当前事件累积器
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+
+    // SSE 以 \n 分隔；空行表示一个事件结束
+    let idx
+    while ((idx = buffer.indexOf('\n')) >= 0) {
+      const lineRaw = buffer.slice(0, idx)
+      buffer = buffer.slice(idx + 1)
+      const line = lineRaw.replace(/\r$/, '')
+
+      if (line === '') {           // 事件结束
+        flushEvent(evt)
+        evt = { event: null, data: [] }
+        continue
+      }
+      if (line.startsWith(':')) {  // 注释/心跳
+        continue
+      }
+      if (line.startsWith('event:')) {
+        evt.event = line.slice(6).trim()
+        continue
+      }
+      if (line.startsWith('data:')) {
+        evt.data.push(line.slice(5).trimStart())
+        continue
+      }
+      // 可选：处理 id:/retry: 等字段，这里用不到
+    }
+  }
+
+  if (!lastJson) {
+    throw new Error('SSE stream ended without a JSON-RPC message')
+  }
+  return lastJson
+}
+
+
+
   /** Low-level send of a JSON-RPC request. */
   async send(method, params) {
     const id = ++this.seq
     const body = { jsonrpc: '2.0', id, method, params }
+    //不需要 id 并且没有返回
+    if(method == "notifications/initialized"){
+        delete body.id;
+    }
 
-    const headers = { 'Content-Type': 'application/json' }
+    const headers = { 'Content-Type': 'application/json' , 'Accept': 'application/json, text/event-stream' }
     if (this.sessionId) headers['Mcp-Session-Id'] = this.sessionId
 
     // Try attach OAuth if configured
@@ -363,7 +448,12 @@ export class StreamableHTTPClientTransport {
     const sid = resp.headers.get('Mcp-Session-Id')
     if (sid) this.sessionId = sid
 
-    const json = await resp.json()
+    // 这里返回可能是 text/event-stream  流式返回
+
+    //console.log('[oauth] token exchange response:', await resp.clone().text());
+    //const json = await resp.json()
+    const json  = await this.readJSONorSSE(resp);
+    console.log('[oauth] token exchange response:', json);
     if (json.error) {
       const e = new Error(json.error.message || 'RPC Error')
       e.code = json.error.code
