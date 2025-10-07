@@ -97,5 +97,5 @@ process.on('unhandledRejection', (e) => console.error('unhandled:', e));
 //let tools = await mcpclient.call(`${mcpServerName}_list`);
 //console.log(JSON.stringify(tools, null, 2));
 
-let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
-console.log(JSON.stringify(initialize, null, 2));
+//let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
+//console.log(JSON.stringify(initialize, null, 2));

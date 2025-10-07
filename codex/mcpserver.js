@@ -4,6 +4,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {loadMCPConfig,initMCPConfig} from "../config.js"
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { count } from 'node:console';
 const PIPE_PATH = '\\\\.\\pipe\\jsonrpc';
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
@@ -14,11 +15,11 @@ const PIPE_PATH = '\\\\.\\pipe\\jsonrpc';
  * }
  * @returns 
  */
-async function createLocalClient(){
+async function createLocalClient(config){
   //让客户端以“子进程”方式拉起/连接本地 stdio server
   const transport = new StdioClientTransport({
-    command: "cmd",         // 等价于 'node'
-    args :["/c","npx","-y", "@supabase/mcp-server-supabase","--access-token","sbp_75d326e31e6cc3d152fc1b4132755cf79e21f434"]
+    command:config.command,
+    args:config.args
   });
 
   const client = new Client({
@@ -62,13 +63,35 @@ async function createRemoteClient(config){
   
   await client.connect(sse);
   console.log('✅ Connected via SSE');
-  const tools = await client.listTools();
-  console.log('Tools:', tools.tools.map(t => t.name));
+  //const tools = await client.listTools();
+  //console.log('Tools:', tools.tools.map(t => t.name));
   return client;
 }
+/**
+ * 查询启用状态的的 MCP 配置
+ */
+function loadEnableMCPConfigs(){
+  let allMCPs = {
+      count: 0,
+      mcpServers: {}
+  };
+  for (const key in mcpConfig.mcpServers) {
+       let config = mcpConfig.mcpServers[key]; 
+       if(!config.disable){
+          allMCPs.mcpServers[key] = config;
+          allMCPs.count++;
+       }
+       
+  }
+  return allMCPs;
+}
+
 let allMCPClients = {};
-for (const key in mcpConfig.mcpServers) {
-    let config = mcpConfig.mcpServers[key]; 
+let enabledMCPs = loadEnableMCPConfigs().mcpServers;
+//console.log("Enabled MCPs:", enabledMCPs);
+for (const key in enabledMCPs) {
+    let config = enabledMCPs[key];
+    //console.log("Creating MCP client for:", key);
     //如果是远程 MCP
     if (config.url) {
         allMCPClients[key] = await createRemoteClient(config);
