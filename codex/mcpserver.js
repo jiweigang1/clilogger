@@ -4,7 +4,6 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {loadMCPConfig,initMCPConfig} from "../config.js"
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { count } from 'node:console';
 const PIPE_PATH = '\\\\.\\pipe\\jsonrpc';
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
