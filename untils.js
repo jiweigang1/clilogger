@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from "child_process";
+import os   from 'os';
 import path from 'path';
 import { pathToFileURL, fileURLToPath } from "node:url";
 
@@ -13,7 +14,12 @@ function getGlobalNpmPath() {
     }
 }
 
+//mcp_oauth_tokens.js
 
+export function getMcpOauthTokensPath(){
+     let home = os.homedir();
+    return path.join(home,'.clilogger',"mcp_oauth_tokens.js");
+}
 
 export function getCloggerFileURL(){
     return pathToFileURL(path.join(getGlobalNpmPath(),'clilogger',"clogger.js"));

@@ -26,23 +26,15 @@
     ]
   },
   "reg|https://radar.mcp.cloudflare.com|http://127.0.0.1:53175/callback": {
-    "client_id": "yfd3ut5QdihBkS8M",
-    "obtained_at": 1759852822832
+    "client_id": "ZCV41vccvgvhNsEh",
+    "obtained_at": 1759938844949
   },
-  "tokens|https://radar.mcp.cloudflare.com|2l79knMQWnmBgJgG": {
-    "access_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:plITnaxUTcvmfaWh:Hi6WSIGvuG972VaGcO3HPuxqQ2YJ7koT",
+  "tokens|https://radar.mcp.cloudflare.com|ZCV41vccvgvhNsEh": {
+    "access_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:S5OyKXATKP6YduMh:It8GB9SBrgrcvzf7nGU6D2xUi0WYjqKF",
     "token_type": "bearer",
     "expires_in": 3600,
-    "refresh_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:plITnaxUTcvmfaWh:AUdvdFxy5xiBfM0oYtI7WCCzuFvw6XPI",
+    "refresh_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:S5OyKXATKP6YduMh:piFV9MdBn22WOLkrssCqa4qkiPPKSPv7",
     "scope": "user:read offline_access account:read radar:read url_scanner:write",
-    "expires_at": 1759856174726
-  },
-  "tokens|https://radar.mcp.cloudflare.com|yfd3ut5QdihBkS8M": {
-    "access_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:nT3fPLMfUh9S41Gw:XDD7igJHZjrTszDxs5z9URxYZpf9YpjZ",
-    "token_type": "bearer",
-    "expires_in": 3600,
-    "refresh_token": "bab2be0cfaea55f79aefd9d5c9b4cc04:nT3fPLMfUh9S41Gw:AFEGZTvrWdBgWMb1SHCKigaPqB5GYNoR",
-    "scope": "user:read offline_access account:read radar:read url_scanner:write",
-    "expires_at": 1759856477458
+    "expires_at": 1759942473010
   }
 }

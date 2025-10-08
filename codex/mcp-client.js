@@ -139,11 +139,34 @@ class OAuthManager {
       }
     }
   }
+  /**
+   * 从缓存中加载 client_id
+   */
+  async loadClientId() {
+    const regKey = `reg|${this.authorizationUrl.origin}|${this.redirectUri.href}`
+    const record = this.store.get(regKey)
+    if (record) {
+      console.log('[oauth] loaded client_id from cache:', record.client_id)
+      return record.client_id
+    }
+    return null
+  }
+  
 
   /** Ensure we have a client_id, using Dynamic Client Registration (RFC 7591) if needed. */
   async ensureClientId() {
-    if (this.clientId) return this.clientId
-    await this.discoverIfNeeded()
+    await this.discoverIfNeeded();
+    if (this.clientId) {
+       this.storeKey = `tokens|${this.tokenUrl.origin}|${this.clientId}`
+      return this.clientId
+    }
+
+    this.clientId = await this.loadClientId();
+    if(this.clientId){
+       this.storeKey = `tokens|${this.tokenUrl.origin}|${this.clientId}`
+       return this.clientId
+    }
+
     if (!this.registrationUrl) {
       if (this.debug) console.warn('[oauth] no registration_endpoint; dynamic registration disabled. You must set oauth.clientId explicitly.')
       throw new Error('Server does not advertise dynamic client registration; please supply oauth.clientId')
@@ -290,7 +313,7 @@ class OAuthManager {
 
         if (!code) { res.statusCode = 400; res.end('Missing code'); return }
         res.statusCode = 200
-        res.end('<html><body>Authentication complete. You may close this window.</body></html>')
+        res.end('<html><body>Authentication complete. You may close this window.<script>window.close()</script></body></html>');
         resolve({ code, recvState: state })
       } catch (err) {
         reject(err)
@@ -453,7 +476,8 @@ async  readJSONorSSE(resp) {
     //console.log('[oauth] token exchange response:', await resp.clone().text());
     //const json = await resp.json()
     const json  = await this.readJSONorSSE(resp);
-    console.log('[oauth] token exchange response:', json);
+
+    //console.log('[oauth] token exchange response:', json);
     if (json.error) {
       const e = new Error(json.error.message || 'RPC Error')
       e.code = json.error.code
@@ -485,6 +509,8 @@ export class Client {
       },
       clientInfo: { name: this.name, version: this.version }
     })
+
+    this._initializeInfo = init;
 
     // Acknowledge ready
     await this.transport.send('notifications/initialized', {})

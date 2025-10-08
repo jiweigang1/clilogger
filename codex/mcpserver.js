@@ -5,6 +5,8 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {loadMCPConfig,initMCPConfig} from "../config.js"
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { Client as OauthClient, StreamableHTTPClientTransport as  OauthStreamableHTTPClientTransport} from './mcp-client.js';
+import {getMcpOauthTokensPath } from '../untils.js';
 const PIPE_PATH = '\\\\.\\pipe\\jsonrpc';
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
@@ -68,6 +70,29 @@ async function createRemoteClient(config){
   return client;
 }
 /**
+ * 创建需要登录的远程客户端
+ * @param {} config 
+ */
+async function createRemoteOauthClient(config){
+  console.log("createRemoteOauthClient",config);
+  const issuer = config.issuer; //'https://radar.mcp.cloudflare.com';
+  const client = new OauthClient({ name: 'radar-demo', version: '1.0.0' });
+  const transport = new OauthStreamableHTTPClientTransport(config.url, {
+    oauth: {
+      issuer,
+      redirectUri: 'http://127.0.0.1:53175/callback',
+      tokenStorePath: getMcpOauthTokensPath(),
+      clientName: 'demo-radar-auto-reg',
+      debug: true
+    }
+      
+  });
+
+  await client.connect(transport);             // 需要登录时会自动拉起浏览器
+  console.log('Radar tools:', await client.listTools());
+  return client;
+}
+/**
  * 查询启用状态的的 MCP 配置
  */
 function loadEnableMCPConfigs(){
@@ -93,7 +118,9 @@ for (const key in enabledMCPs) {
     let config = enabledMCPs[key];
     //console.log("Creating MCP client for:", key);
     //如果是远程 MCP
-    if (config.url) {
+    if(config.issuer&&config.url){
+        allMCPClients[key] = await createRemoteOauthClient(config);
+    }else if (config.url) {
         allMCPClients[key] = await createRemoteClient(config);
     }else{
         allMCPClients[key] = await createLocalClient(config);
@@ -127,7 +154,9 @@ export async function handle(methodfull, params, id, socket ) {
   if (method === 'initialize'){
     //新版本已经在 await client.connect(transport); 完成协商，不需要处理
     //这里是可以通过 
-    if(mcpClient.initialize){
+    if(mcpClient._initializeInfo){
+      return mcpClient._initializeInfo;
+    }else if (mcpClient.initialize){
       return await mcpClient.initialize({
               clientInfo: {
                 name: 'my-client',
@@ -243,6 +272,6 @@ export function isMainModule() {
   return isDirectRun && !isChildProcess;
 }
 
-if(isMainModule()){
-  main();
-}
+//if(isMainModule()){
+ // main();
+//}

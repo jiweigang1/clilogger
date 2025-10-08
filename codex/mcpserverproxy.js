@@ -21,6 +21,7 @@ if(!mcpServerName){
    console.error("MCP server name is required --mcpServerName=supabase");
    process.exit(1);
 }
+
 console.log("执行代理 MCPServer " + mcpServerName);
 
 let  mcpclient  = new JsonRpcClient();
@@ -98,6 +99,7 @@ process.on('unhandledRejection', (e) => console.error('unhandled:', e));
 //let tools = await mcpclient.call(`${mcpServerName}_list`);
 //console.log(JSON.stringify(tools, null, 2));
 async function main(){
+   console.log(`mcpclient.call('${mcpServerName}_initialize')`);
   let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
    console.log(JSON.stringify(initialize, null, 2));
 }
@@ -120,10 +122,10 @@ export function isMainModule() {
     process.send !== undefined ||
     process.env.__IS_SUBPROCESS__ === "1" ||
     (process.ppid !== 1 && process.ppid !== process.pid);
-
+   console.log("isChildProcess:",  isDirectRun && !isChildProcess);
   return isDirectRun && !isChildProcess;
 }
 
-if(isMainModule()){
-  main();
-}
+//if(isMainModule()){
+//  main();
+//}
