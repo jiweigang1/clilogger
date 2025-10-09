@@ -6,8 +6,8 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import {loadMCPConfig,initMCPConfig} from "../config.js"
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client as OauthClient, StreamableHTTPClientTransport as  OauthStreamableHTTPClientTransport} from './mcp-client.js';
-import {getMcpOauthTokensPath } from '../untils.js';
-const PIPE_PATH = '\\\\.\\pipe\\jsonrpc';
+import {getMcpOauthTokensPath , getPipePath } from '../untils.js';
+const PIPE_PATH = getPipePath();
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
 /**
@@ -74,7 +74,7 @@ async function createRemoteClient(config){
  * @param {} config 
  */
 async function createRemoteOauthClient(config){
-  console.log("createRemoteOauthClient",config);
+  //console.log("createRemoteOauthClient",config);
   const issuer = config.issuer; //'https://radar.mcp.cloudflare.com';
   const client = new OauthClient({ name: 'radar-demo', version: '1.0.0' });
   const transport = new OauthStreamableHTTPClientTransport(config.url, {
@@ -89,7 +89,7 @@ async function createRemoteOauthClient(config){
   });
 
   await client.connect(transport);             // 需要登录时会自动拉起浏览器
-  console.log('Radar tools:', await client.listTools());
+  //console.log('Radar tools:', await client.listTools());
   return client;
 }
 /**
@@ -189,7 +189,7 @@ export async function handle(methodfull, params, id, socket ) {
   };
   if (method === 'call') {
     let result = await mcpClient.callTool({ name: params?.name, arguments: params?.arguments });
-    console.log("Call result:", JSON.stringify(result, null, 2));
+    //console.log("Call result:", JSON.stringify(result, null, 2));
     return result;
   }
   throw new Error(`Method not found: ${method}`);

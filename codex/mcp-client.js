@@ -206,10 +206,12 @@ class OAuthManager {
     const record = this.store.get(this.storeKey)
     if (record) {
       const { access_token, expires_at, refresh_token } = record
+      // 检查访问令牌是否有效
       if (expires_at && Date.now() < expires_at - 30_000) {
         if (this.debug) console.log('[oauth] reuse cached token (valid)')
         return access_token
       }
+      // 如果访问令牌已过期，尝试使用刷新令牌获取新令牌
       if (refresh_token) {
         try {
           if (this.debug) console.log('[oauth] refreshing access token...')
@@ -443,7 +445,7 @@ async  readJSONorSSE(resp) {
       if (token) headers['Authorization'] = `Bearer ${token}`
     }
 
-    console.log('[oauth] sending request:', JSON.stringify({ method, params, headers , body }, null, 2))
+    //console.log('[oauth] sending request:', JSON.stringify({ method, params, headers , body }, null, 2))
 
     let resp = await fetch(this.baseUrl, { method: 'POST', headers, body: JSON.stringify(body) })
 

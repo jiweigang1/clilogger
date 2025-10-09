@@ -1,7 +1,10 @@
 import net from 'node:net';
+import { getPipePath } from '../untils.js';
 
-const PIPE_PATH = '\\\\.\\pipe\\jsonrpc';
-
+const PIPE_PATH = getPipePath();
+/**
+ * 使用文件协议通信的 JSON-RPC 客户端
+ */
 export default class JsonRpcClient {
   constructor() {
     this.socket = net.createConnection(PIPE_PATH);

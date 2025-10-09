@@ -149,3 +149,20 @@ export function getOptions(){
   return options;
 };
 
+/**
+ * 获取命名管道路径
+ * @returns 
+ */
+export function getPipePath(){
+    const PIPE_NAME = 'jsonrpc';
+    let PIPE_PATH;
+    if (process.platform === 'win32') {
+        // Windows 命名管道
+        PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
+    } else {
+        // macOS / Linux 使用 Unix 域套接字路径
+        PIPE_PATH = path.join(os.tmpdir(), PIPE_NAME + '.sock');
+    }
+    console.log('Pipe path:', PIPE_PATH);
+    return PIPE_PATH;
+}
