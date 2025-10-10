@@ -156,50 +156,57 @@ function getMCPNameMethod(method){
 
 // 用户实现：统一请求处理器（返回值作为 result，抛错则作为 error）
 export async function handle(methodfull, params, id, socket ) {
-  logger.debug("Handling request:" + JSON.stringify({ methodfull, params, id }));
-  let {mcpClient,method} = getMCPNameMethod(methodfull);
-  if (method === 'initialize'){
-    //新版本已经在 await client.connect(transport); 完成协商，不需要处理
-    //这里是可以通过 
-    if(mcpClient._initializeInfo){
-      return mcpClient._initializeInfo;
-    }else if (mcpClient.initialize){
-      return await mcpClient.initialize({
-              clientInfo: {
-                name: 'my-client',
-                version: '0.1.0',
-              },
-              capabilities: {
-                tools: true,
-                resources: true,
-                logging: false,
-              },
-            });
-    }else{
-       let initialize = {
-          //不知道怎么获取
-          "protocolVersion":mcpClient.transport.protocolVersion?mcpClient.transport.protocolVersion:"2025-03-26",
-          "serverInfo": mcpClient.getServerVersion(),
-          "capabilities": mcpClient.getServerCapabilities(),
-          "instructions": mcpClient["_instructions"]? mcpClient["_instructions"]:""
-       };
-       //console.log("Initialize1:", JSON.stringify(initialize, null, 2));
-       return initialize;
-    }
-     
-  } 
+  try {
+      logger.debug("Handling request:" + JSON.stringify({ methodfull, params, id }));
+      let {mcpClient,method} = getMCPNameMethod(methodfull);
+      if (method === 'initialize'){
+        //新版本已经在 await client.connect(transport); 完成协商，不需要处理
+        //这里是可以通过 
+        if(mcpClient._initializeInfo){
+          return mcpClient._initializeInfo;
+        }else if (mcpClient.initialize){
+          return await mcpClient.initialize({
+                  clientInfo: {
+                    name: 'my-client',
+                    version: '0.1.0',
+                  },
+                  capabilities: {
+                    tools: true,
+                    resources: true,
+                    logging: false,
+                  },
+                });
+        }else{
+          let initialize = {
+              //不知道怎么获取
+              "protocolVersion":mcpClient.transport.protocolVersion?mcpClient.transport.protocolVersion:"2025-03-26",
+              "serverInfo": mcpClient.getServerVersion(),
+              "capabilities": mcpClient.getServerCapabilities(),
+              "instructions": mcpClient["_instructions"]? mcpClient["_instructions"]:""
+          };
+          //console.log("Initialize1:", JSON.stringify(initialize, null, 2));
+          return initialize;
+        }
+        
+      } 
 
-  if (method === 'list') {
-     let tools = await mcpClient.listTools();
-     //console.log("Tools:", JSON.stringify(tools, null, 2));
-     return tools;
-  };
-  if (method === 'call') {
-    let result = await mcpClient.callTool({ name: params?.name, arguments: params?.arguments });
-    //console.log("Call result:", JSON.stringify(result, null, 2));
-    return result;
+      if (method === 'list') {
+        let tools = await mcpClient.listTools();
+        //console.log("Tools:", JSON.stringify(tools, null, 2));
+        return tools;
+      };
+      if (method === 'call') {
+        let result = await mcpClient.callTool({ name: params?.name, arguments: params?.arguments });
+        //console.log("Call result:", JSON.stringify(result, null, 2));
+        return result;
+      }
+      throw new Error(`Method not found: ${method}`);
+
+  } catch (error) {
+      logger.error(" McpServer 处理方法异常 " + methodfull + error);
   }
-  throw new Error(`Method not found: ${method}`);
+
+  
 }
 
 const respond = (sock, id, result, error) => {
