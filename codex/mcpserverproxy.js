@@ -48,7 +48,7 @@ async function handleRequest({ id, method, params }) {
       );
       */
         let res = await mcpclient.call(`${mcpServerName}_initialize`);
-        //console.log(res);
+        logger.debug(" mcpclient result:  " + JSON.stringify(res));
         return send(ok(res), id);
     }
 
