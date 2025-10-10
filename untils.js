@@ -151,6 +151,7 @@ export function getOptions(){
 export const PIPE_NAME = Date.now() + 'jsonrpc';
 /**
  * 获取命名管道路径
+ * Unix domain socket 通信
  * @returns 
  */
 export function getPipePath(){
