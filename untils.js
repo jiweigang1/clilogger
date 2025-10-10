@@ -162,7 +162,13 @@ export function getPipePath(){
         PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
     } else {
         // macOS / Linux 使用 Unix 域套接字路径
-        PIPE_PATH = path.join(os.tmpdir(), PIPE_NAME + '.sock');
+        // macOS os.tmpdir() 有时候会返回两种不同的路径 
+        // /var/folders/82/0y73zsn14ls4cp6g660xb9nm0000gn/T
+        // /tmp/
+        //PIPE_PATH = path.join(os.tmpdir(), PIPE_NAME + '.sock');
+        
+       //使用写死的方案
+       PIPE_PATH = path.join('/tmp', PIPE_NAME + '.sock');
     }
     console.log('Pipe path:', PIPE_PATH);
     return PIPE_PATH;
