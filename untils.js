@@ -148,15 +148,14 @@ export function getOptions(){
     });
   return options;
 };
-export const PIPE_NAME = Date.now() + 'jsonrpc';
+//export const PIPE_NAME = Date.now() + 'jsonrpc';
 /**
  * 获取命名管道路径
  * Unix domain socket 通信
  * @returns 
  */
 export function getPipePath(){
-    //增加时间戳，每次启动都不一样
-    //const PIPE_NAME = Date.now() + 'jsonrpc';
+    const PIPE_NAME =  'jsonrpc';
     let PIPE_PATH;
     if (process.platform === 'win32') {
         // Windows 命名管道
