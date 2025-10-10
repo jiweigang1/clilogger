@@ -2,6 +2,8 @@ import JsonRpcClient from "./mcpclient.js"
 import { pathToFileURL } from "url";
 import readline from 'node:readline';
 import {getOptions} from "../untils.js"
+import LogManager from "../logger-manager.js";
+const logger = LogManager.getSystemLogger();
 
 // ---- 2) JSON-RPC 帮助函数 ----
 function send(resultOrError, id) {
@@ -18,21 +20,23 @@ function ok(result) {
 }
 let  mcpServerName = getOptions().mcpServerName;
 if(!mcpServerName){
-   console.error("MCP server name is required --mcpServerName=supabase");
+   logger.error("MCP server name is required --mcpServerName=supabase");
    process.exit(1);
 }
 
-console.log("执行代理 MCPServer " + mcpServerName);
+logger.debug("执行代理 MCPServer " + mcpServerName);
 
 let  mcpclient  = new JsonRpcClient();
 
+logger.debug("执行代理 MCPServer , 创建客户端成功 " );
+
+
 // ---- 3) 处理 JSON-RPC 请求 ----
 async function handleRequest({ id, method, params }) {
+  logger.debug(" handleRequest  ",id,method,params);
   try {
     // a) 初始化握手（极简实现）
     if (method === 'initialize') {
-    
-    
       /**   
       return send(
         ok({

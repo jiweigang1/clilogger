@@ -56,9 +56,15 @@ class LogManager {
         return logger;
     
   }
+  getSystemLogger(){
+    return this.getLogger();
+  }
   getLogger(cliType, full=true) {
      if(!this.allLoggers["_system"]){
-        this.allLoggers["_system"] = this.__createLogger("system", false);
+         this.allLoggers["_system"] = this.__createLogger("system", false);
+     }
+     if(cliType==null){
+        return this.allLoggers["_system"];
      }
      if(!this.allLoggers[cliType]){
         this.allLoggers[cliType] = {
