@@ -33,7 +33,7 @@ logger.debug("执行代理 MCPServer , 创建客户端成功 " );
 
 // ---- 3) 处理 JSON-RPC 请求 ----
 async function handleRequest({ id, method, params }) {
-  logger.debug(" handleRequest  ",id,method,params);
+  logger.debug(" handleRequest  " + JSON.stringify({id,method,params}));
   try {
     // a) 初始化握手（极简实现）
     if (method === 'initialize') {
