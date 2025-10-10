@@ -11,9 +11,11 @@ const PIPE_PATH = getPipePath();
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
 /**
+ * 启动 local mcp 服务
  * {
  *  command:""
- *  args:[]
+ *  args:[]，
+ *  evn：{}
  * }
  * @returns 
  */
@@ -21,7 +23,8 @@ async function createLocalClient(config){
   //让客户端以“子进程”方式拉起/连接本地 stdio server
   const transport = new StdioClientTransport({
     command:config.command,
-    args:config.args
+    args:config.args,
+    env:config.env?config.env:{}
   });
 
   const client = new Client({
