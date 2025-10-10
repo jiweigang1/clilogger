@@ -154,7 +154,8 @@ export function getOptions(){
  * @returns 
  */
 export function getPipePath(){
-    const PIPE_NAME = 'jsonrpc';
+    //增加时间戳，每次启动都不一样
+    const PIPE_NAME = Date.now() + 'jsonrpc';
     let PIPE_PATH;
     if (process.platform === 'win32') {
         // Windows 命名管道
