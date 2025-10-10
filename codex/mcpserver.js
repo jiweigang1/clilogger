@@ -157,7 +157,7 @@ function getMCPNameMethod(method){
 // 用户实现：统一请求处理器（返回值作为 result，抛错则作为 error）
 export async function handle(methodfull, params, id, socket ) {
   try {
-      logger.debug("Handling request:" + JSON.stringify({ methodfull, params, id }));
+      logger.debug(" mcpserver Handling request:" + JSON.stringify({ methodfull, params, id }));
       let {mcpClient,method} = getMCPNameMethod(methodfull);
       if (method === 'initialize'){
         //新版本已经在 await client.connect(transport); 完成协商，不需要处理
