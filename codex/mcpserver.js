@@ -222,7 +222,7 @@ export function startMCPServerProxy(){
     return;
   }  
 
-  net.createServer((socket) => {
+   const rpcserver = net.createServer((socket) => {
     let buf = '';
     socket.on('data', (chunk) => {
       buf += chunk;
@@ -246,9 +246,18 @@ export function startMCPServerProxy(){
       }
     });
     socket.on('error', () => {});
-  }).listen(PIPE_PATH, () => {
-    console.log('JSON-RPC server listening on', PIPE_PATH);
   });
+  
+  //如果已经存在删除
+  if (fs.existsSync(PIPE_PATH)){
+      fs.unlinkSync(PIPE_PATH);
+  }
+
+  rpcserver.listen(PIPE_PATH, () => {
+    console.log('JSON-RPC server listening on', PIPE_PATH);
+    logger.debug('JSON-RPC server listening on' + PIPE_PATH);
+  });
+  
 }
 
 function main() {
