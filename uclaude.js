@@ -7,6 +7,7 @@ import {getClaudePath} from './untils.js';
 import inquirer from 'inquirer';
 import path  from "path";
 import { fileURLToPath, pathToFileURL } from "url";
+import {startMCPServerProxy} from "./codex/mcpserver.js"
 
 /**
  * 启动 calude code
@@ -66,4 +67,9 @@ function start(){
 
 
 }
-start();
+
+function main(){
+  startMCPServerProxy();
+  start();
+}
+main();
