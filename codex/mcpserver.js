@@ -7,6 +7,9 @@ import {loadMCPConfig,initMCPConfig} from "../config.js"
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client as OauthClient, StreamableHTTPClientTransport as  OauthStreamableHTTPClientTransport} from './mcp-client.js';
 import {getMcpOauthTokensPath , getPipePath } from '../untils.js';
+import LogManager from "../logger-manager.js";
+const logger = LogManager.getSystemLogger();
+
 const PIPE_PATH = getPipePath();
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
@@ -152,7 +155,7 @@ function getMCPNameMethod(method){
 
 // 用户实现：统一请求处理器（返回值作为 result，抛错则作为 error）
 export async function handle(methodfull, params, id, socket ) {
-  //console.log("Handling request:", { methodfull, params, id });
+  logger.debug("Handling request:" + JSON.stringify({ methodfull, params, id }));
   let {mcpClient,method} = getMCPNameMethod(methodfull);
   if (method === 'initialize'){
     //新版本已经在 await client.connect(transport); 完成协商，不需要处理
