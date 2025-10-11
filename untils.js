@@ -2,7 +2,10 @@
 import { execSync } from "child_process";
 import os   from 'os';
 import path from 'path';
+import fs from 'node:fs';
 import { pathToFileURL, fileURLToPath } from "node:url";
+import LogManager from "./logger-manager.js";
+const logger = LogManager.getSystemLogger();
 
 function getGlobalNpmPath() {
     try {
@@ -152,6 +155,69 @@ export function getOptions(){
     });
   return options;
 };
+
+
+export function getParentPidSync(pid) {
+  if (process.platform === 'linux') {
+    try {
+      const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
+      // /proc/<pid>/stat: pid (comm) state ppid ...
+      // 注意 comm 里有括号，按空格拆分前先把括号段去掉
+      const rightParen = stat.indexOf(')'); // 找到进程名右括号
+      const after = stat.slice(rightParen + 2); // 跳过 ") "
+      const fields = after.split(' ');
+      const ppid = Number(fields[1]); // state 后面紧跟就是 ppid
+      return Number.isFinite(ppid) ? ppid : null;
+    } catch {
+      // 回退
+    }
+  }
+
+  if (process.platform === 'darwin' || process.platform === 'freebsd' || process.platform === 'openbsd') {
+    try {
+      const stdout = execSync(`ps -o ppid= -p ${pid}`, { encoding: 'utf8' }).trim();
+      return stdout ? Number(stdout) : null;
+    } catch {
+      // 回退
+    }
+  }
+
+  if (process.platform === 'win32') {
+    // 用 PowerShell + CIM，并强制 UTF-8 输出，避免编码问题与 wmic 弃用问题
+    try {
+      const cmd = [
+        'powershell',
+        '-NoProfile',
+        '-Command',
+        // 强制 UTF-8 输出；有些系统默认不是 UTF-8
+        "$OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new();",
+        `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").ParentProcessId`
+      ].join(' ');
+      const stdout = execSync(cmd, { encoding: 'utf8' }).trim();
+      const n = Number(stdout);
+      return Number.isFinite(n) ? n : null;
+    } catch {
+      // 最后再尝试 wmic（若存在）
+      try {
+        const stdout = execSync(
+          `wmic process where (ProcessId=${pid}) get ParentProcessId /format:list`,
+          { encoding: 'utf8' }
+        );
+        const m = stdout.match(/ParentProcessId=(\d+)/i);
+        return m ? Number(m[1]) : null;
+      } catch {}
+    }
+  }
+
+  // 通用兜底（适用于大多数 Unix）
+  try {
+    const stdout = execSync(`ps -o ppid= -p ${pid}`, { encoding: 'utf8' }).trim();
+    return stdout ? Number(stdout) : null;
+  } catch {
+    return null;
+  }
+}
+
 //export const PIPE_NAME = Date.now() + 'jsonrpc';
 /**
  * 获取命名管道路径
@@ -159,13 +225,9 @@ export function getOptions(){
  * @returns 
  */
 export function getPipePath(){
-    // 优先使用环境变量,claude code 启动  webserver 的时候是有的
-    //if(process.env.PIPE_NAME){
-    //    return process.env.PIPE_NAME;
-    //}
-    //console.log('Pipe name:', process.env.CLI_TYPE);
-    //const PIPE_NAME = process.env.CLI_TYPE == "claude" ? process.pid +'jsonrpc' : 'jsonrpc';
-    const PIPE_NAME = 'jsonrpc';
+    
+    const PIPE_NAME = process.env.PIPE_PATH_PRE?  process.env.PIPE_PATH_PRE + 'jsonrpc' :  'jsonrpc';
+
     let PIPE_PATH;
     if (process.platform === 'win32') {
         // Windows 命名管道

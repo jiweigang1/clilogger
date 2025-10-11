@@ -95,6 +95,28 @@ function startCodexcli(){
   });
 
 }
+/**
+function startMCPServerProxy(){
+   let dir = path.dirname(fileURLToPath(import.meta.url));
+   // 启动 MCP 代理服务
+   const child = spawn("node " + (path.join(dir, "mcp" ,'claude-mcpproxy-launcher.js')), [], {
+       stdio: 'inherit',
+       shell: true,
+       env: {
+         //  PIPE_PATH_PRE: process.pid
+       }
+   });
+
+   child.on("error", (error) => {
+       console.error("Failed to start MCP server proxy:", error.message);
+       process.exit(1);
+   });
+
+   child.on("close", (code) => {
+       process.exit(code || 0);
+   });
+}
+  */ 
 
 function  main(){
    startServer();

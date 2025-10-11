@@ -8,7 +8,6 @@ import {getClaudePath , getPipePath} from './untils.js';
 import inquirer from 'inquirer';
 import path  from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-import {startMCPServerProxy} from "./codex/mcpserver.js"
 
 /**
  * 启动 calude code
@@ -47,7 +46,7 @@ function start(){
         const child = spawn(claudePath,[],{
                 env:{
                     ...env,
-                    "PIPE_NAME": getPipePath()
+                     PIPE_PATH_PRE: process.pid
                 },
                 stdio: 'inherit', // 继承父进程 stdio，方便交互,
                 shell: true
@@ -72,7 +71,26 @@ function start(){
 
 
 }
+function startMCPServerProxy(){
+   let dir = path.dirname(fileURLToPath(import.meta.url));
+   // 启动 MCP 代理服务
+   const child = spawn("node " + (path.join(dir, "mcp" ,'claude-mcpproxy-launcher.js')), [], {
+       stdio: 'inherit',
+       shell: true,
+       env: {
+           PIPE_PATH_PRE: process.pid
+       }
+   });
 
+   child.on("error", (error) => {
+       console.error("Failed to start MCP server proxy:", error.message);
+       process.exit(1);
+   });
+
+   child.on("close", (code) => {
+       process.exit(code || 0);
+   });
+}
 function main(){
   startMCPServerProxy();
   start();
