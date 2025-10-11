@@ -1,3 +1,7 @@
+/**
+ * 代理 MCP 服务是可以单独进行的，理论上一台机器只需要启动一个代理进程，便可以处理来自多个客户端的请求。
+ * 但是如果主进程关闭，代理进程也会随之关闭。
+ */
 import net from 'node:net';
 import fs from 'fs';
 import { pathToFileURL } from "url";
@@ -312,28 +316,4 @@ function main() {
   startMCPServerProxy();
 }
 
-/**
- * 判断当前模块是否是主运行模块：
- * ✅ node xxx.js 直接执行 → true
- * 🚫 import 时 → false
- * 🚫 子进程 (spawn/fork) 启动时 → false
- */
-export function isMainModule() {
-  // 当前模块文件 URL
-  const currentFile = pathToFileURL(process.argv[1]).href;
-
-  // 是否为直接运行
-  const isDirectRun = import.meta.url === currentFile;
-
-  // 是否为子进程
-  const isChildProcess =
-    process.send !== undefined ||
-    process.env.__IS_SUBPROCESS__ === "1" ||
-    (process.ppid !== 1 && process.ppid !== process.pid);
-
-  return isDirectRun && !isChildProcess;
-}
-
-//if(isMainModule()){
-//  main();
-//}
+//main();
