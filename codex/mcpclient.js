@@ -1,5 +1,7 @@
 import net from 'node:net';
 import { getPipePath } from '../untils.js';
+import LogManager from '../logger-manager.js';
+const logger = LogManager.getSystemLogger();
 
 const PIPE_PATH = getPipePath();
 /**
@@ -11,6 +13,12 @@ export default class JsonRpcClient {
     this.nextId = 1;
     this.pending = new Map();
     let buf = '';
+    
+    // Handle connection errors immediately
+    this.socket.on('error', (err) => {
+      logger.error('Failed to connect to MCP server:', err.message);
+      process.exit(1);
+    });
 
     this.socket.on('data', (chunk) => {
       buf += chunk;

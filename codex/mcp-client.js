@@ -49,12 +49,14 @@ import { randomBytes, createHash } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { URL, URLSearchParams } from 'node:url'
+import LogManager from "../logger-manager.js";
+const logger = LogManager.getSystemLogger();
 
 /** Utility: open system browser cross-platform */
 function openInBrowser(url) {
   const href = typeof url === 'string' ? url : url.href
   const platform = process.platform
-  console.log('[oauth] opening browser at:' + platform , href);
+  logger.debug('[oauth] opening browser at:' + platform , href);
   try {
     if (platform === 'darwin') {
       spawn('open', [href], { stdio: 'ignore', detached: true }).unref()
@@ -65,7 +67,7 @@ function openInBrowser(url) {
       spawn(candidates[0], [href], { stdio: 'ignore', detached: true }).unref()
     }
   } catch (e) {
-    console.warn('[oauth] failed to open browser automatically. Please open this URL manually:', href)
+    logger.warn('[oauth] failed to open browser automatically. Please open this URL manually:', href)
   }
 }
 
@@ -124,14 +126,14 @@ class OAuthManager {
         if (!resp.ok) throw new Error(`OAuth discovery failed: ${resp.status}`)
         meta = await resp.json()
         this.store.set(this.metaKey, meta)
-        if (this.debug) console.log('[oauth] discovery metadata:', meta)
+        if (this.debug) logger.debug('[oauth] discovery metadata:', meta)
       }
       if (!this.authorizationUrl && meta.authorization_endpoint) this.authorizationUrl = new URL(meta.authorization_endpoint)
       if (!this.tokenUrl && meta.token_endpoint) this.tokenUrl = new URL(meta.token_endpoint)
       if (!this.registrationUrl && meta.registration_endpoint) this.registrationUrl = new URL(meta.registration_endpoint)
 
       if (this.debug) {
-        console.log('[oauth] discovered endpoints:', {
+        logger.debug('[oauth] discovered endpoints:', {
           authorization_endpoint: this.authorizationUrl?.href,
           token_endpoint: this.tokenUrl?.href,
           registration_endpoint: this.registrationUrl?.href || '(none)'
@@ -146,7 +148,7 @@ class OAuthManager {
     const regKey = `reg|${this.authorizationUrl.origin}|${this.redirectUri.href}`
     const record = this.store.get(regKey)
     if (record) {
-      console.log('[oauth] loaded client_id from cache:', record.client_id)
+      logger.debug('[oauth] loaded client_id from cache:', record.client_id)
       return record.client_id
     }
     return null
@@ -168,7 +170,7 @@ class OAuthManager {
     }
 
     if (!this.registrationUrl) {
-      if (this.debug) console.warn('[oauth] no registration_endpoint; dynamic registration disabled. You must set oauth.clientId explicitly.')
+      if (this.debug) logger.warn('[oauth] no registration_endpoint; dynamic registration disabled. You must set oauth.clientId explicitly.')
       throw new Error('Server does not advertise dynamic client registration; please supply oauth.clientId')
     }
 
@@ -187,7 +189,7 @@ class OAuthManager {
       body: JSON.stringify(body)
     })
     if (!resp.ok) {
-      console.error('[oauth] client registration failed:', await resp.text())
+      logger.error('[oauth] client registration failed:', await resp.text())
       throw new Error(`Client registration failed: ${resp.status}`)
     }
     const json = await resp.json()
@@ -195,7 +197,7 @@ class OAuthManager {
     const regKey = `reg|${this.authorizationUrl.origin}|${this.redirectUri.href}`
     this.store.set(regKey, { client_id: this.clientId, obtained_at: Date.now() })
     this.storeKey = `tokens|${this.tokenUrl.origin}|${this.clientId}`
-    if (this.debug) console.log('[oauth] dynamic client registered:', this.clientId)
+    if (this.debug) logger.debug('[oauth] dynamic client registered:', this.clientId)
     return this.clientId
   }
 
@@ -208,16 +210,16 @@ class OAuthManager {
       const { access_token, expires_at, refresh_token } = record
       // 检查访问令牌是否有效
       if (expires_at && Date.now() < expires_at - 30_000) {
-        if (this.debug) console.log('[oauth] reuse cached token (valid)')
+        if (this.debug) logger.debug('[oauth] reuse cached token (valid)')
         return access_token
       }
       // 如果访问令牌已过期，尝试使用刷新令牌获取新令牌
       if (refresh_token) {
         try {
-          if (this.debug) console.log('[oauth] refreshing access token...')
+          if (this.debug) logger.debug('[oauth] refreshing access token...')
           return await this.refresh(refresh_token)
         } catch (err) {
-          if (this.debug) console.warn('[oauth] refresh failed, falling back to full auth:', err?.message)
+          if (this.debug) logger.warn('[oauth] refresh failed, falling back to full auth:', err?.message)
         }
       }
     }
@@ -234,7 +236,7 @@ class OAuthManager {
     if (!resp.ok) throw new Error(`OAuth refresh failed: ${resp.status}`)
     const json = await resp.json()
     this.persistTokens(json)
-    if (this.debug) console.log('[oauth] refresh ok; expires_in:', json.expires_in)
+    if (this.debug) logger.debug('[oauth] refresh ok; expires_in:', json.expires_in)
     return json.access_token
   }
 
@@ -255,7 +257,7 @@ class OAuthManager {
     authUrl.searchParams.set('code_challenge_method', 'S256')
     authUrl.searchParams.set('state', state)
 
-    if (this.debug) console.log('[oauth] opening authorize URL:', authUrl.href)
+    if (this.debug) logger.debug('[oauth] opening authorize URL:', authUrl.href)
     //这里只需要打开授权地址，随后本地回调服务器会接收授权码并继续 PKCE 流程获取访问令牌
     openInBrowser(authUrl)
 
@@ -277,14 +279,14 @@ class OAuthManager {
     //这里获取失败 
     const resp = await fetch(this.tokenUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
     if (!resp.ok) {
-         console.error('[oauth] token exchange failed url:', this.tokenUrl + "");
-         console.error('[oauth] token exchange failed body:', body + "");
-         console.error('[oauth] token exchange failed response:', await resp.text());
+         logger.error('[oauth] token exchange failed url:', this.tokenUrl + "");
+         logger.error('[oauth] token exchange failed body:', body + "");
+         logger.error('[oauth] token exchange failed response:', await resp.text());
        throw new Error(`OAuth token exchange failed: ${resp.status}`);
     }
     const json = await resp.json()
     this.persistTokens(json)
-    if (this.debug) console.log('[oauth] auth ok; expires_in:', json.expires_in)
+    if (this.debug) logger.debug('[oauth] auth ok; expires_in:', json.expires_in)
     return json.access_token
   }
 
@@ -310,8 +312,8 @@ class OAuthManager {
         const code = reqUrl.searchParams.get('code')
         const state = reqUrl.searchParams.get('state')
 
-        console.log('[oauth] received code:', code);
-        console.log('[oauth] received state:', state);
+        logger.debug('[oauth] received code:', code);
+        logger.debug('[oauth] received state:', state);
 
         if (!code) { res.statusCode = 400; res.end('Missing code'); return }
         res.statusCode = 200
@@ -356,7 +358,7 @@ async  readJSONorSSE(resp) {
   if (!ct.startsWith('text/event-stream')) {
     // 兜底：不是 JSON 也不是 SSE，就按文本丢错
     const text = await resp.text().catch(() => '')
-    console.log(`Unsupported content-type: ${ct}. Body: ${text}`);
+    logger.debug(`Unsupported content-type: ${ct}. Body: ${text}`);
     return {result: {}, jsonrpc: '2.0'}
     //throw new Error(`Unsupported content-type: ${ct}. Body: ${text}`)
   }
@@ -439,20 +441,20 @@ async  readJSONorSSE(resp) {
     // Try attach OAuth if configured
     if (this.oauth) {
       const token = await this.oauth.getAccessToken().catch((e) => {
-        console.warn('[oauth] getAccessToken failed:', e?.message)
+        logger.warn('[oauth] getAccessToken failed:', e?.message)
         return null
       })
       if (token) headers['Authorization'] = `Bearer ${token}`
     }
 
-    //console.log('[oauth] sending request:', JSON.stringify({ method, params, headers , body }, null, 2))
+    //logger.debug('[oauth] sending request:', JSON.stringify({ method, params, headers , body }, null, 2))
 
     let resp = await fetch(this.baseUrl, { method: 'POST', headers, body: JSON.stringify(body) })
 
     // If unauthorized and OAuth is configured, try once to re-auth then retry
     if (resp.status === 401 && this.oauth) {
       const token = await this.oauth.runAuthCodeFlow().catch((e) => {
-        console.warn('[oauth] re-auth failed:', e?.message)
+        logger.warn('[oauth] re-auth failed:', e?.message)
         return null
       })
 
@@ -475,11 +477,11 @@ async  readJSONorSSE(resp) {
 
     // 这里返回可能是 text/event-stream  流式返回
 
-    //console.log('[oauth] token exchange response:', await resp.clone().text());
+    //logger.debug('[oauth] token exchange response:', await resp.clone().text());
     //const json = await resp.json()
     const json  = await this.readJSONorSSE(resp);
 
-    //console.log('[oauth] token exchange response:', json);
+    //logger.debug('[oauth] token exchange response:', json);
     if (json.error) {
       const e = new Error(json.error.message || 'RPC Error')
       e.code = json.error.code

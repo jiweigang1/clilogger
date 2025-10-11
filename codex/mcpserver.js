@@ -37,7 +37,7 @@ async function createLocalClient(config){
   });
 
   await client.connect(transport);
-  console.log("Client connected");
+  logger.debug("Client connected");
   return client;
 }
 /**
@@ -55,12 +55,12 @@ async function createRemoteClient(config){
       // 也可在这里传 Cookie / X-... 等企业网关要求的头
     });
     await client.connect(transport);
-    console.log('✅ Connected via Streamable HTTP');
+    logger.debug('✅ Connected via Streamable HTTP');
     //const tools = await client.listTools();
     //console.log('Tools:', tools.tools.map(t => t.name));
     return client;
   } catch (err) {
-    console.warn('Streamable HTTP failed, fallback to SSE...', err?.message);
+    logger.debug('Streamable HTTP failed, fallback to SSE...', err?.message);
   }
 
   // 回退到 SSE（老服务或未升级的实现）
@@ -71,7 +71,7 @@ async function createRemoteClient(config){
 
   
   await client.connect(sse);
-  console.log('✅ Connected via SSE');
+  logger.debug('✅ Connected via SSE');
   //const tools = await client.listTools();
   //console.log('Tools:', tools.tools.map(t => t.name));
   return client;
@@ -226,7 +226,7 @@ export function startMCPServerProxy(){
     }
 
   if(!start){
-    console.log("当前没有配置 MCP Server ，无需启动代理服务。");
+    logger.debug("当前没有配置 MCP Server ，无需启动代理服务。");
     return;
   }  
 
@@ -262,14 +262,14 @@ export function startMCPServerProxy(){
   }
 
   rpcserver.listen(PIPE_PATH, () => {
-    console.log('JSON-RPC server listening on', PIPE_PATH);
+    logger.debug('JSON-RPC server listening on', PIPE_PATH);
     logger.debug('JSON-RPC server listening on' + PIPE_PATH);
   });
   
 }
 
 function main() {
-  console.log('Starting MCP Server Proxy...');
+  logger.debug('Starting MCP Server Proxy...');
   startMCPServerProxy();
 }
 
