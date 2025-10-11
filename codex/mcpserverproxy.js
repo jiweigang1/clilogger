@@ -33,7 +33,7 @@ logger.debug("执行代理 MCPServer , 创建客户端成功 " );
 
 // ---- 3) 处理 JSON-RPC 请求 ----
 async function handleRequest({ id, method, params }) {
-  logger.debug(" handleRequest  " + JSON.stringify({id,method,params}));
+  logger.debug(` handleRequest  ${mcpServerName} ` + JSON.stringify({id,method,params}));
   try {
     // a) 初始化握手（极简实现）
     if (method === 'initialize') {
@@ -70,7 +70,8 @@ async function handleRequest({ id, method, params }) {
     // e) 未实现的方法
     return send(error(-32601, `Method not found: ${method}`), id);
   } catch (e) {
-    return send(error(-32603, 'Internal error', { message: String(e?.message || e) }), id);
+    logger.error(` handleRequest  ${mcpServerName}  error ` + e?.message + "  " + e + "\nStack trace: " + e.stack);
+    return send(error(-32603, 'Internal error ' + e?.message , { message: String(e?.message || e) }), id);
   }
 }
 
@@ -104,8 +105,12 @@ process.on('unhandledRejection', (e) => console.error('unhandled:', e));
 //console.log(JSON.stringify(tools, null, 2));
 async function main(){
    console.log(`mcpclient.call('${mcpServerName}_initialize')`);
-  let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
-   console.log(JSON.stringify(initialize, null, 2));
+   try {
+       let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
+       console.log(JSON.stringify(initialize, null, 2));
+   } catch (error) {
+       console.error("Error initializing MCP client:", error);
+   }
 }
 
 /**
@@ -131,7 +136,7 @@ export function isMainModule() {
 }
 
 //if(isMainModule()){
-//  main();
+// main();
 //}
 
 logger.debug("Environment Variables: " + JSON.stringify(process.env, null, 2));

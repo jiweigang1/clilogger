@@ -195,9 +195,12 @@ function getMCPNameMethod(method){
 
 // 用户实现：统一请求处理器（返回值作为 result，抛错则作为 error）
 export async function handle(methodfull, params, id, socket ) {
-  try {
       logger.debug(" mcpserver Handling request:" + JSON.stringify({ methodfull, params, id }));
       let {name, mcpClient,method} = getMCPNameMethod(methodfull);
+      if(!mcpClient){
+        logger.error("MCP Client not found for: " + name);
+        throw new Error(`McpServer not found ` + name);
+      }
       if (method === 'initialize'){
         //新版本已经在 await client.connect(transport); 完成协商，不需要处理
         //这里是可以通过 
@@ -243,19 +246,13 @@ export async function handle(methodfull, params, id, socket ) {
         //console.log("Call result:", JSON.stringify(result, null, 2));
         return result;
       }
-      throw new Error(`Method not found: ${method}`);
+      throw new Error(`McpServer Method not found: ${method}`);
 
-  } catch (error) {
-      logger.error(" McpServer 处理方法异常 " + methodfull + "  " + error + "\nStack trace: " + error.stack);
-  }
-
-  
 }
 
 const respond = (sock, id, result, error) => {
   const msg = { jsonrpc: '2.0', id: id ?? null };
-  error ? (msg.error = { code: -32000, message: String(error) })
-        : (msg.result = result);
+  error ? (msg.error = { code: -32000, message: String(error) }) : (msg.result = result);
   sock.write(JSON.stringify(msg) + '\n');
 };
 
@@ -306,7 +303,6 @@ export function startMCPServerProxy(){
 
   rpcserver.listen(PIPE_PATH, () => {
     logger.debug('JSON-RPC server listening on', PIPE_PATH);
-    logger.debug('JSON-RPC server listening on' + PIPE_PATH);
   });
   
 }
@@ -339,5 +335,5 @@ export function isMainModule() {
 }
 
 //if(isMainModule()){
- // main();
+//  main();
 //}
