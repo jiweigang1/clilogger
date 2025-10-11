@@ -118,6 +118,43 @@ function loadEnableMCPConfigs(){
   return allMCPs;
 }
 
+/**
+ * 过滤和改写 tools
+ * @param {string} mcpName - MCP 服务名称
+ * @param {Array} tools - 原始 tools 列表
+ * @returns {Array} - 过滤和改写后的 tools 列表
+ */
+function filterAndRewriteTools(mcpName, tools) {
+  const config = mcpConfig.mcpServers[mcpName];
+  if (!config || !config.tools) {
+    return tools;
+  }
+
+  let filteredTools = tools;
+
+  // 应用黑名单过滤
+  if (config.tools.blacklist && Array.isArray(config.tools.blacklist)) {
+    filteredTools = tools.filter(tool => 
+      !config.tools.blacklist.includes(tool.name)
+    );
+  }
+
+  // 应用描述改写
+  if (config.tools.descriptions && typeof config.tools.descriptions === 'object') {
+    filteredTools = filteredTools.map(tool => {
+      if (config.tools.descriptions[tool.name]) {
+        return {
+          ...tool,
+          description: config.tools.descriptions[tool.name]
+        };
+      }
+      return tool;
+    });
+  }
+
+  return filteredTools;
+}
+
 let allMCPClients = {};
 let enabledMCPs = loadEnableMCPConfigs().mcpServers;
 //console.log("Enabled MCPs:", enabledMCPs);
@@ -141,7 +178,9 @@ function getMCPClient(name) {
 }
 function getMCPNameMethod(method){
     let  res = {
+      //MCP 服务名称
       name:"",
+      //Tool 方法名称
       method:"",
       mcpClient:""
     }
@@ -158,7 +197,7 @@ function getMCPNameMethod(method){
 export async function handle(methodfull, params, id, socket ) {
   try {
       logger.debug(" mcpserver Handling request:" + JSON.stringify({ methodfull, params, id }));
-      let {mcpClient,method} = getMCPNameMethod(methodfull);
+      let {name, mcpClient,method} = getMCPNameMethod(methodfull);
       if (method === 'initialize'){
         //新版本已经在 await client.connect(transport); 完成协商，不需要处理
         //这里是可以通过 
@@ -192,7 +231,11 @@ export async function handle(methodfull, params, id, socket ) {
 
       if (method === 'list') {
         let tools = await mcpClient.listTools();
-        //console.log("Tools:", JSON.stringify(tools, null, 2));
+        // 应用黑名单过滤和描述改写
+        if (tools && tools.tools) {
+          tools.tools = filterAndRewriteTools(name, tools.tools);
+        }
+        logger.debug("Tools:" + JSON.stringify(tools, null, 2));
         return tools;
       };
       if (method === 'call') {
@@ -203,7 +246,7 @@ export async function handle(methodfull, params, id, socket ) {
       throw new Error(`Method not found: ${method}`);
 
   } catch (error) {
-      logger.error(" McpServer 处理方法异常 " + methodfull + error);
+      logger.error(" McpServer 处理方法异常 " + methodfull + "  " + error + "\nStack trace: " + error.stack);
   }
 
   

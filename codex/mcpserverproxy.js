@@ -133,3 +133,6 @@ export function isMainModule() {
 //if(isMainModule()){
 //  main();
 //}
+
+logger.debug("Environment Variables: " + JSON.stringify(process.env, null, 2));
+logger.debug("Process Arguments: " + JSON.stringify(process.argv, null, 2));

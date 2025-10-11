@@ -68,7 +68,13 @@ let defaultMCPConfig = {
   "mcpServers": {
     "supabase": {
       "url": "https://mcp.supabase.com/mcp",
-      "bearer_token":"sbp_xxxxx"
+      "bearer_token":"sbp_xxxxx",
+      "tools": {
+        "blacklist": ["tool_name_to_exclude"],
+        "descriptions": {
+          "tool_name": "Custom description for this tool"
+        }
+      }
     }
   }
 

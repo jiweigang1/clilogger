@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import os from 'os';
 import fs from "fs";
 import { spawn } from 'child_process';
+import {getPipePath , getCodexPath} from './untils.js';
 import {startMCPServerProxy} from "./codex/mcpserver.js"
 
 /**
@@ -79,7 +80,7 @@ function startCodexcli(){
      }
   }
 
-  const child = spawn('codex', configCmd,{
+  const child = spawn("node  "+getCodexPath(), configCmd,{
     stdio: 'inherit', // 继承父进程 stdio，方便交互
     shell: true,
     env:{

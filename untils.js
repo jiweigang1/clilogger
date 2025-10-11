@@ -28,6 +28,10 @@ export function getCloggerFileURL(){
 export function getClaudePath(){
      return path.join(getGlobalNpmPath(),'@anthropic-ai',"claude-code","cli.js");
 }
+//C:\Users\gang.ji\AppData\Roaming\npm\node_modules\@openai\codex\bin\codex.js
+export function getCodexPath(){
+     return path.join(getGlobalNpmPath(),'@openai',"codex","bin","codex.js");
+}
 
 
 /**
@@ -155,7 +159,13 @@ export function getOptions(){
  * @returns 
  */
 export function getPipePath(){
-    const PIPE_NAME =  'jsonrpc';
+    // 优先使用环境变量,claude code 启动  webserver 的时候是有的
+    //if(process.env.PIPE_NAME){
+    //    return process.env.PIPE_NAME;
+    //}
+    //console.log('Pipe name:', process.env.CLI_TYPE);
+    //const PIPE_NAME = process.env.CLI_TYPE == "claude" ? process.pid +'jsonrpc' : 'jsonrpc';
+    const PIPE_NAME = 'jsonrpc';
     let PIPE_PATH;
     if (process.platform === 'win32') {
         // Windows 命名管道

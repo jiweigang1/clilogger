@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+global.CLI_TYPE = "claude"
 import {initConfig,loadConfig} from "./config.js"
 import readline from 'readline';
 import { spawn } from 'child_process';
-import {getClaudePath} from './untils.js';
+import {getClaudePath , getPipePath} from './untils.js';
 import inquirer from 'inquirer';
 import path  from "path";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -32,6 +33,7 @@ function start(){
 
         var config = allConfig[answers.choice];
         let env =  config.env;
+        // claudecode 环境变量是可以通过 env 传递到 mcpserver
         let claudePath = config?.CLAUDE_PATH || process.env.CLAUDE_PATH || getClaudePath();
         let dir = path.dirname(fileURLToPath(import.meta.url));
         if(answers.choice=="openrouter"){
@@ -43,7 +45,10 @@ function start(){
             console.log(`启动 Claude 进程: ${claudePath}`);
 
         const child = spawn(claudePath,[],{
-                env,
+                env:{
+                    ...env,
+                    "PIPE_NAME": getPipePath()
+                },
                 stdio: 'inherit', // 继承父进程 stdio，方便交互,
                 shell: true
             }
