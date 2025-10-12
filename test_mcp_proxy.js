@@ -1,8 +1,11 @@
 import { spawn } from 'child_process';
 import JsonRpcClient from './codex/mcpclient.js';
+import LogManager from './logger-manager.js';
+
+const logger = LogManager.getSystemLogger();
 
 async function testMCPProxy() {
-  console.log('Starting MCP proxy server test...');
+  logger.debug('Starting MCP proxy server test...');
   
   // Start the MCP proxy server
   const proxyProcess = spawn('node', ['codex/mcpserverproxy.js', '--mcpServerName=supabase'], {
@@ -10,32 +13,32 @@ async function testMCPProxy() {
   });
   
   proxyProcess.stderr.on('data', (data) => {
-    console.error('Proxy stderr:', data.toString());
+    logger.error('Proxy stderr:', data.toString());
   });
   
   proxyProcess.stdout.on('data', (data) => {
-    console.log('Proxy stdout:', data.toString());
+    logger.debug('Proxy stdout:', data.toString());
   });
   
   // Wait a bit for the server to start
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   try {
-    console.log('Creating JSON-RPC client...');
+    logger.debug('Creating JSON-RPC client...');
     const client = new JsonRpcClient();
     
-    console.log('Testing initialize...');
+    logger.debug('Testing initialize...');
     const initResult = await client.call('supabase_initialize');
-    console.log('Initialize result:', JSON.stringify(initResult, null, 2));
+    logger.debug('Initialize result:', JSON.stringify(initResult, null, 2));
     
-    console.log('Testing list tools...');
+    logger.debug('Testing list tools...');
     const toolsResult = await client.call('supabase_list');
-    console.log('Tools result:', JSON.stringify(toolsResult, null, 2));
+    logger.debug('Tools result:', JSON.stringify(toolsResult, null, 2));
     
     if (toolsResult && toolsResult.tools) {
-      console.log(`Found ${toolsResult.tools.length} tools via proxy`);
+      logger.debug(`Found ${toolsResult.tools.length} tools via proxy`);
     } else {
-      console.log('No tools found via proxy or unexpected format');
+      logger.debug('No tools found via proxy or unexpected format');
     }
     
   } catch (error) {

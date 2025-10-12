@@ -18,7 +18,7 @@ class LogManager {
             fs.mkdirSync(logDir, { recursive: true });
         }
 
-        console.log('clilogger log Directory:', logDir);
+        //console.log('clilogger log Directory:', logDir);
 
         let timestamp = Date.now();
 

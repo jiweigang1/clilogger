@@ -49,7 +49,7 @@ function headersToObject(headers) {
 function instrumentFetch() {
   if (!global.fetch || global.fetch.__ProxyInstrumented) return;
   
-  console.log("-------------Clogger instrumentFetch--------------------------");
+  logger.debug("-------------Clogger instrumentFetch--------------------------");
 
   const originalFetch = global.fetch;
   global.fetch = async (input, init = {}) => {
@@ -123,5 +123,5 @@ function instrumentFetch() {
 try{
   instrumentFetch();
 }catch(e){
-    console.log(e);
+    logger.system.error(e);
 }

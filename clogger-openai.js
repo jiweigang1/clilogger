@@ -66,7 +66,7 @@ function headersToObject(headers) {
 function instrumentFetch() {
   if (!global.fetch || global.fetch.__ProxyInstrumented) return;
   
-  console.log("-------------Clogger instrumentFetch--------------------------");
+  logger.debug("-------------Clogger instrumentFetch--------------------------");
 
   const originalFetch = global.fetch;
   global.fetch = async (input, init = {}) => {
@@ -112,7 +112,7 @@ function instrumentFetch() {
     //text/event-stream; charset=utf-8  注意后面会有参数，不能直接相等比较，要使用包含
 	  if(!types.some(t => contentType.includes(t))){
       let text = await toClient.text();
-      console.log("返回结果无法处理: " + url + " " + contentType + "\n -> " + text);
+      logger.debug("返回结果无法处理: " + url + " " + contentType + "\n -> " + text);
       return new Response(text, {
             status: response.status,
             statusText: response.statusText,
@@ -159,5 +159,5 @@ function instrumentFetch() {
 try{
   instrumentFetch();
 }catch(e){
-    console.log(e);
+    logger.error(e);
 }

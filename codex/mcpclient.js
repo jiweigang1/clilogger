@@ -105,11 +105,11 @@ export default class JsonRpcClient {
 (async () => {
   const cli = new JsonRpcClient(PIPE_PATH);
   try {
-    console.log('ping =>', await cli.call('ping'));
-    console.log('echo =>', await cli.call('echo', 'hello'));
-    console.log('add  =>', await cli.call('add', [1, 2]));
+    logger.debug('ping =>', await cli.call('ping'));
+    logger.debug('echo =>', await cli.call('echo', 'hello'));
+    logger.debug('add  =>', await cli.call('add', [1, 2]));
   } catch (e) {
-    console.error('RPC error:', e.message);
+    logger.error('RPC error:', e.message);
   } finally {
     setTimeout(() => process.exit(0), 200);
   }

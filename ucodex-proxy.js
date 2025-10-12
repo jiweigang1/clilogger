@@ -10,10 +10,10 @@ const wire_api = process.env.wire_api;
 //访问的 Base URL 地址
 const base_url = process.env.base_url;
 
-console.log("Base URL:", base_url);
-console.log("Wire API:", wire_api);
+logger.debug("Base URL:", base_url);
+logger.debug("Wire API:", wire_api);
 
-console.log(process.env);
+logger.debug(process.env);
 
 function toSimple(full , wire_api){
    let log = {
@@ -98,7 +98,7 @@ async function handel(request, reply, endpoint){
     delete incomingHeaders["accept"];
     
     let url  = joinUrl(base_url,endpoint);
-    console.log("向endpoint 发送请求：" + url);
+    logger.debug("向endpoint 发送请求：" + url);
 
     let response = await fetch(url, {
       method: "POST",
@@ -159,7 +159,7 @@ async function handel(request, reply, endpoint){
 const startServer = async () => {
   try {
     await fastify.listen({ port: 3000, host: "0.0.0.0" });
-    console.log("✅ Server started");
+    logger.debug("✅ Server started");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

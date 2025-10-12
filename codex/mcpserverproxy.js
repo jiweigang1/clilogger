@@ -104,12 +104,12 @@ process.on('unhandledRejection', (e) => console.error('unhandled:', e));
 //let tools = await mcpclient.call(`${mcpServerName}_list`);
 //console.log(JSON.stringify(tools, null, 2));
 async function main(){
-   console.log(`mcpclient.call('${mcpServerName}_initialize')`);
+   logger.debug(`mcpclient.call('${mcpServerName}_initialize')`);
    try {
        let initialize = await mcpclient.call(`${mcpServerName}_initialize`);
-       console.log(JSON.stringify(initialize, null, 2));
+       logger.debug(JSON.stringify(initialize, null, 2));
    } catch (error) {
-       console.error("Error initializing MCP client:", error);
+       logger.error("Error initializing MCP client:", error);
    }
 }
 
@@ -131,7 +131,7 @@ export function isMainModule() {
     process.send !== undefined ||
     process.env.__IS_SUBPROCESS__ === "1" ||
     (process.ppid !== 1 && process.ppid !== process.pid);
-   console.log("isChildProcess:",  isDirectRun && !isChildProcess);
+   logger.debug("isChildProcess:",  isDirectRun && !isChildProcess);
   return isDirectRun && !isChildProcess;
 }
 

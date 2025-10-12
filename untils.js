@@ -13,10 +13,10 @@ const logger = LogManager.getSystemLogger();
 function getGlobalNpmPath() {
     try {
     const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
-    console.log("全局模块路径:", npmRoot);
+    logger.debug("全局模块路径:", npmRoot);
     return npmRoot;
     } catch (err) {
-       console.error("获取 npm root -g 失败:", err.message);
+       logger.error("获取 npm root -g 失败:", err.message);
     }
 }
 
@@ -58,7 +58,7 @@ function proxyBody(body){
       }
         const handler = {
             get(target, prop, receiver) {
-                console.log(prop);
+                logger.debug(prop);
                 const value = Reflect.get(target, prop, receiver);
                 if(prop == "getReader"){
                     return () =>{
@@ -212,7 +212,7 @@ export async function getPipePath(){
        //使用写死的方案
        PIPE_PATH = path.join('/tmp', PIPE_NAME + '.sock');
     }
-    console.log('Pipe path:', PIPE_PATH);
+    logger.debug('Pipe path:', PIPE_PATH);
     return PIPE_PATH;
 }
 /**

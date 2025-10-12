@@ -1,9 +1,12 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import LogManager from './logger-manager.js';
+
+const logger = LogManager.getSystemLogger();
 
 async function testSupabaseMCP() {
   try {
-    console.log('Testing Supabase MCP connection...');
+    logger.debug('Testing Supabase MCP connection...');
     
     const client = new Client({ name: 'supabase-test', version: '1.0.0' });
     const transport = new StreamableHTTPClientTransport(new URL('https://mcp.supabase.com/mcp'), {
@@ -14,25 +17,25 @@ async function testSupabaseMCP() {
       }
     });
     
-    console.log('Connecting to Supabase MCP...');
+    logger.debug('Connecting to Supabase MCP...');
     await client.connect(transport);
-    console.log('✅ Connected successfully');
+    logger.debug('✅ Connected successfully');
     
-    console.log('Listing tools...');
+    logger.debug('Listing tools...');
     const tools = await client.listTools();
-    console.log('Raw tools response:', JSON.stringify(tools, null, 2));
+    logger.debug('Raw tools response:', JSON.stringify(tools, null, 2));
     
     if (tools && tools.tools) {
-      console.log(`Found ${tools.tools.length} tools:`);
+      logger.debug(`Found ${tools.tools.length} tools:`);
       tools.tools.forEach((tool, index) => {
-        console.log(`${index + 1}. ${tool.name}: ${tool.description || 'No description'}`);
+        logger.debug(`${index + 1}. ${tool.name}: ${tool.description || 'No description'}`);
       });
     } else {
-      console.log('No tools found or unexpected response format');
+      logger.debug('No tools found or unexpected response format');
     }
     
   } catch (error) {
-    console.error('Error testing Supabase MCP:', error);
+    logger.error('Error testing Supabase MCP:', error);
   }
 }
 

@@ -8,6 +8,9 @@ import {getClaudePath} from './untils.js';
 import inquirer from 'inquirer';
 import path  from "path";
 import { fileURLToPath, pathToFileURL } from "url";
+import LogManager from './logger-manager.js';
+
+const logger = LogManager.getSystemLogger();
 
 /**
  * 启动 calude code
@@ -41,7 +44,7 @@ function start(){
              claudePath = "node --import "+ pathToFileURL(path.join(dir, 'clogger.js')) + " " + claudePath;
         }
 
-            console.log(`启动 Claude 进程: ${claudePath}`);
+            logger.debug(`启动 Claude 进程: ${claudePath}`);
 
         const child = spawn(claudePath,[],{
                 env:{
@@ -55,7 +58,7 @@ function start(){
 
         child.on("error", (error) => {
             console.error("Failed to start claude command:", error.message);
-            console.log(
+            logger.debug(
                 "Make sure Claude Code is installed: npm install -g @anthropic-ai/claude-code"
             );
             process.exit(1);

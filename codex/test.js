@@ -1,4 +1,7 @@
 import { Client, StreamableHTTPClientTransport } from './mcp-client.js';
+import LogManager from '../logger-manager.js';
+
+const logger = LogManager.getSystemLogger();
 
 const issuer = 'https://radar.mcp.cloudflare.com';
 const client = new Client({ name: 'radar-demo', version: '1.0.0' });
@@ -24,4 +27,4 @@ const transport = new StreamableHTTPClientTransport(`${issuer}/mcp`, {
 
 
 await client.connect(transport);             // 需要登录时会自动拉起浏览器
-console.log('Radar tools:', await client.listTools());
+logger.debug('Radar tools:', await client.listTools());

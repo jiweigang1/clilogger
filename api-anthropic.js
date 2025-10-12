@@ -1,3 +1,7 @@
+import LogManager from './logger-manager.js';
+
+const logger = LogManager.getSystemLogger();
+
 export function mergeAnthropic(all){
    return mergeAnthropicChunks(all.split("\n"));
 }
@@ -234,7 +238,7 @@ export function mergeAnthropicChunks(rawChunks) {
   
   if(message.content.length == 0){
 	  for( c in rawChunks){
-		  console.log(c);
+		  logger.debug(c);
 	  }
   }
 
@@ -262,7 +266,7 @@ const chunks = [
 ];
 
 const { message, debug } = mergeAnthropicChunks(chunks);
-console.log(JSON.stringify(message, null, 2), debug);
+logger.debug(JSON.stringify(message, null, 2), debug);
 */
 
 

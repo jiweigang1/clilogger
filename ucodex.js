@@ -53,11 +53,11 @@ const startServer = async () => {
 
   // 监听错误输出
   child.stderr.on('data', (data) => {
-    console.error(`子进程 stderr: ${data}`);
+    logger.error(`子进程 stderr: ${data}`);
   });
 
   child.on('close', (code) => {
-    console.log(`codex 退出，退出码: ${code}`);
+    logger.debug(`codex 退出，退出码: ${code}`);
   });
 };
 /**
@@ -94,7 +94,7 @@ function startCodexcli(){
 
 
   child.on('close', (code) => {
-    console.log(`codex 退出，退出码: ${code}`);
+    logger.debug(`codex 退出，退出码: ${code}`);
   });
 
 }

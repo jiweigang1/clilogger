@@ -1,5 +1,8 @@
 import { execSync } from 'child_process';
 import os from 'os';
+import LogManager from './logger-manager.js';
+
+const logger = LogManager.getSystemLogger();
 
 function getParentPidSync(pid) {
   if (os.platform() === 'win32') {
@@ -15,4 +18,4 @@ function getParentPidSync(pid) {
 
 const parent = process.ppid;
 const grand = getParentPidSync(parent);
-console.log('parent:', parent, 'grandparent:', grand);
+logger.debug('parent:', parent, 'grandparent:', grand);
