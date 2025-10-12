@@ -26,6 +26,7 @@ if(!mcpServerName){
 
 logger.debug("执行代理 MCPServer " + mcpServerName);
 
+// 这里执行异步连接 mcpServer，不需要启动的时候全部连接
 let  mcpclient  = new JsonRpcClient();
 
 logger.debug("执行代理 MCPServer , 创建客户端成功 " );
