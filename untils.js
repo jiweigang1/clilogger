@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from "child_process";
+import psList from 'ps-list';
 import os   from 'os';
 import path from 'path';
 import fs from 'node:fs';
@@ -170,16 +171,32 @@ export function psTreeAsync(pid) {
 }
 
 
-
-//export const PIPE_NAME = Date.now() + 'jsonrpc';
+global.PIPE_PATH_PRE = null;
 /**
  * 获取命名管道路径
  * Unix domain socket 通信
  * @returns 
  */
-export function getPipePath(){
-    logger.debug('PPIDS' + process.ppid);
-    const PIPE_NAME = process.env.PIPE_PATH_PRE?  process.env.PIPE_PATH_PRE + 'jsonrpc' :  'jsonrpc';
+export async function getPipePath(){
+    
+    let PIPE_NAME ;    
+    if(process.env.PIPE_PATH_PRE){
+        PIPE_NAME = process.env.PIPE_PATH_PRE + 'jsonrpc';
+    }else{
+        if(global.PIPE_PATH_PRE){
+            PIPE_NAME = global.PIPE_PATH_PRE + 'jsonrpc';
+        }else{
+            let  node = await findFirstProcess(process.pid);
+            if(node){
+                PIPE_NAME = node.pid + 'jsonrpc';
+                global.PIPE_PATH_PRE = node.pid+"";
+            }else{
+                PIPE_NAME = 'jsonrpc';
+            }
+        }
+        //使用第一个 node进程 id
+       
+    }
 
     let PIPE_PATH;
     if (process.platform === 'win32') {
@@ -198,3 +215,47 @@ export function getPipePath(){
     console.log('Pipe path:', PIPE_PATH);
     return PIPE_PATH;
 }
+/**
+ * 获取系统的所有进程的祖先
+ * @param {} pid 
+ * @returns 
+ */
+async function getProcessAncestors(pid) {
+  const processes = await psList();
+  const map = new Map(processes.map(p => [p.pid, p])); // 建立 pid -> 进程映射
+  const mapAll = new Map(); 
+  const ancestors = [];
+  ancestors.push(map.get(pid));
+  let current = map.get(pid);
+  while (current && current.ppid && current.ppid !== 0) {
+    //已经存在返回，防止循环
+    if(mapAll.get(current.ppid)){
+        break;
+    } 
+    const parent = map.get(current.ppid);
+    logger.debug(`当前进程: ${JSON.stringify(current)}, 父进程: ${JSON.stringify(parent)}`);
+
+    if (!parent){ 
+        break;
+    }
+    if(current.pid == parent.pid){
+        break;
+    }
+    mapAll.set(parent.pid, parent);
+    ancestors.push(parent);
+    current = parent;
+  }
+  return ancestors;
+}
+
+async function findFirstProcess(pid) {
+   let  process = [...(await getProcessAncestors(pid))].reverse()
+   for(let p of process){
+     if(p.name === "node.exe"){
+        return p;
+     }
+   }
+   return null;
+}
+
+//console.log(await findFirstProcess(process.pid));

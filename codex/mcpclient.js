@@ -3,7 +3,7 @@ import { getPipePath } from '../untils.js';
 import LogManager from '../logger-manager.js';
 const logger = LogManager.getSystemLogger();
 
-const PIPE_PATH = getPipePath();
+const PIPE_PATH = await getPipePath();
 
 /**
  * 使用文件协议通信的 JSON-RPC 客户端

@@ -4,7 +4,7 @@ global.CLI_TYPE = "claude"
 import {initConfig,loadConfig} from "./config.js"
 import readline from 'readline';
 import { spawn } from 'child_process';
-import {getClaudePath , getPipePath} from './untils.js';
+import {getClaudePath} from './untils.js';
 import inquirer from 'inquirer';
 import path  from "path";
 import { fileURLToPath, pathToFileURL } from "url";

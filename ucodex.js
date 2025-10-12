@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import os from 'os';
 import fs from "fs";
 import { spawn } from 'child_process';
-import {getPipePath , getCodexPath ,psTreeAsync} from './untils.js';
+import {getCodexPath} from './untils.js';
 import {startMCPServerProxy} from "./codex/mcpserver.js"
 import LogManager from "./logger-manager.js";
 const logger = LogManager.getSystemLogger();
