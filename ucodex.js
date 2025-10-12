@@ -6,8 +6,11 @@ import { fileURLToPath, pathToFileURL } from "url";
 import os from 'os';
 import fs from "fs";
 import { spawn } from 'child_process';
-import {getPipePath , getCodexPath} from './untils.js';
+import {getPipePath , getCodexPath ,psTreeAsync} from './untils.js';
 import {startMCPServerProxy} from "./codex/mcpserver.js"
+import LogManager from "./logger-manager.js";
+const logger = LogManager.getSystemLogger();
+
 
 /**
  * codex 是 rust 开发，只能使用代理模式进行日志获取
@@ -124,3 +127,6 @@ function  main(){
 	 startCodexcli();
 }
 main();
+psTreeAsync(process.pid).then(children => {
+   logger.debug('子进程树:' + JSON.stringify(children));
+});
