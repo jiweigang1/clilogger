@@ -74,15 +74,21 @@ function start(){
 
 
 }
+// 这里需要判断是否启动完成，不然后面 mcp 会连接失败
+/** 
 function startMCPServerProxy(){
    let dir = path.dirname(fileURLToPath(import.meta.url));
    // 启动 MCP 代理服务
    const child = spawn("node " + (path.join(dir, "mcp" ,'claude-mcpproxy-launcher.js')), [], {
-       stdio: 'inherit',
+       stdio: "pipe" ,
        shell: true,
        env: {
            PIPE_PATH_PRE: process.pid
        }
+   });
+
+   child.stdout.on("data", (data) => {
+        console.log("子进程输出:", data.toString());
    });
 
    child.on("error", (error) => {
@@ -92,10 +98,49 @@ function startMCPServerProxy(){
 
    child.on("close", (code) => {
        process.exit(code || 0);
-   });
+   });   
 }
-function main(){
-  startMCPServerProxy();
+*/
+
+async function startMCPServerProxy() {
+  return new Promise((resolve, reject) => {
+    const dir = path.dirname(fileURLToPath(import.meta.url));
+    const child = spawn("node " + path.join(dir, "mcp", "claude-mcpproxy-launcher.js"), [], {
+      stdio: "pipe",
+      shell: true,
+      env: {
+        PIPE_PATH_PRE: process.pid
+      }
+    });
+
+    child.stdout.on("data", (data) => {
+      const msg = data.toString().trim();
+      //console.log("子进程输出:", msg);
+      if (msg.includes("ok_ok")) {
+        resolve("MCP server proxy started successfully");
+      }
+    });
+
+    child.stderr.on("data", (data) => {
+      console.error("子进程错误输出:", data.toString());
+    });
+
+    child.on("error", (error) => {
+      reject(new Error("Failed to start MCP server proxy: " + error.message));
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error("MCP server proxy exited with code " + code));
+      }
+    });
+  });
+}
+
+async function main(){
+  console.log("Starting MCP server proxy...");
+  await startMCPServerProxy();
+  console.log("MCP server proxy started successfully.");
   start();
 }
-main();
+await main();
