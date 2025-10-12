@@ -20,9 +20,14 @@ class LogManager {
 
         //console.log('clilogger log Directory:', logDir);
 
+        // 使用时间戳创建文件，但只在第一次创建时显示
         let timestamp = Date.now();
+        const filename = full ? `api-full-${timestamp}.log` : `api-simple-${timestamp}.log`;
+        const filepath = path.join(logDir, filename);
 
-        const fd = full? fs.openSync(`${logDir}/api-full-${timestamp}.log`, 'a') : fs.openSync(`${logDir}/api-simple-${timestamp}.log`, 'a');
+        //console.log(`Creating ${full ? 'full' : 'simple'} log file:`, filepath);
+
+        const fd = fs.openSync(filepath, 'a');
 
         const stream = {
         write: (str) => {

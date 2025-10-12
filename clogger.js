@@ -24,12 +24,23 @@ function toSimpleLog(fullLog){
 }
 
 function logAPI(fullLog){
-    //console.log(fullLog);
-    logger.full.debug(fullLog);
-    logger.simple.debug(toSimpleLog(fullLog));
-    //要及时输出
-    logger.simple.flush();
-    logger.full.flush();
+    //console.log('Writing to log files...');
+    try {
+        logger.full.debug(fullLog);
+        logger.simple.debug(toSimpleLog(fullLog));
+
+        // 立即同步到文件
+        if (logger.full.flush) {
+            logger.full.flush();
+        }
+        if (logger.simple.flush) {
+            logger.simple.flush();
+        }
+
+       // console.log('Log files written successfully');
+    } catch (error) {
+        console.error('Error writing to log files:', error);
+    }
 }
 
 function headersToObject(headers) {
@@ -110,6 +121,7 @@ function instrumentFetch() {
             logger.full.debug("adassdadadadad>>>>>>" + JSON.stringify(fullLog));
            
             logAPI(fullLog);
+
           })().catch(err => logger.system.error('日志解析错误:' + "\nStack trace: " + err.stack));
         
 
