@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import LogManager from './logger-manager.js';
+import LogManager from '../logger-manager.js';
 
 const logger = LogManager.getSystemLogger();
 

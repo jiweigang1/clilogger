@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
-import JsonRpcClient from './codex/mcpclient.js';
-import LogManager from './logger-manager.js';
+import JsonRpcClient from '../codex/mcpclient.js';
+import LogManager from '../logger-manager.js';
 
 const logger = LogManager.getSystemLogger();
 
@@ -8,7 +8,7 @@ async function testMCPProxy() {
   logger.debug('Starting MCP proxy server test...');
   
   // Start the MCP proxy server
-  const proxyProcess = spawn('node', ['codex/mcpserverproxy.js', '--mcpServerName=supabase'], {
+  const proxyProcess = spawn('node', ['../codex/mcpserverproxy.js', '--mcpServerName=supabase'], {
     stdio: ['pipe', 'pipe', 'pipe']
   });
   

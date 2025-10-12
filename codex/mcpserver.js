@@ -160,23 +160,59 @@ function filterAndRewriteTools(mcpName, tools) {
 }
 
 let allMCPClients = {};
+let allMCPConfigs = {};
 let enabledMCPs = loadEnableMCPConfigs().mcpServers;
 //console.log("Enabled MCPs:", enabledMCPs);
+
+// 只保存配置，不立即连接
 for (const key in enabledMCPs) {
-    let config = enabledMCPs[key];
-    //console.log("Creating MCP client for:", key);
-    //如果是远程 MCP
-    if(config.issuer&&config.url){
-        allMCPClients[key] = await createRemoteOauthClient(config);
-    }else if (config.url) {
-        allMCPClients[key] = await createRemoteClient(config);
-    }else{
-        allMCPClients[key] = await createLocalClient(config);
-    }
+    allMCPConfigs[key] = enabledMCPs[key];
+    // 初始化客户端为null，表示未连接
+    allMCPClients[key] = null;
 }
 
 //创建本地连接
 //let client = await createLocalClient();
+
+/**
+ * 懒加载MCP客户端
+ * 如果客户端未连接，则根据配置创建连接
+ * @param {string} name - MCP服务名称
+ * @returns {Promise<object>} - 返回连接的客户端
+ */
+async function getOrCreateMCPClient(name) {
+  // 如果客户端已存在且已连接，直接返回
+  if (allMCPClients[name]) {
+    return allMCPClients[name];
+  }
+
+  // 获取配置
+  const config = allMCPConfigs[name];
+  if (!config) {
+    logger.error("MCP configuration not found for: " + name);
+    return null;
+  }
+
+  logger.debug(`懒加载创建MCP客户端: ${name}`);
+
+  try {
+    // 根据配置类型创建客户端
+    if(config.issuer&&config.url){
+      allMCPClients[name] = await createRemoteOauthClient(config);
+    }else if (config.url) {
+      allMCPClients[name] = await createRemoteClient(config);
+    }else{
+      allMCPClients[name] = await createLocalClient(config);
+    }
+
+    logger.debug(`MCP客户端创建成功: ${name}`);
+    return allMCPClients[name];
+  } catch (error) {
+    logger.error(`创建MCP客户端失败 ${name}:`, error);
+    throw error;
+  }
+}
+
 function getMCPClient(name) {
   return allMCPClients[name];
 }
@@ -201,13 +237,25 @@ function getMCPNameMethod(method){
 export async function handle(methodfull, params, id, socket ) {
       logger.debug(" mcpserver Handling request:" + JSON.stringify({ methodfull, params, id }));
       let {name, mcpClient,method} = getMCPNameMethod(methodfull);
+
+      // 使用懒加载获取客户端
       if(!mcpClient){
-        logger.error("MCP Client not found for: " + name);
-        throw new Error(`McpServer not found ` + name);
+        logger.debug(`MCP Client not found for: ${name}, attempting lazy load...`);
+        try {
+          mcpClient = await getOrCreateMCPClient(name);
+          if (!mcpClient) {
+            logger.error("MCP Client creation failed for: " + name);
+            throw new Error(`McpServer not found: ${name}`);
+          }
+        } catch (error) {
+          logger.error(`Failed to create MCP client for ${name}:`, error);
+          throw new Error(`Failed to connect to MCP server: ${name} - ${error.message}`);
+        }
       }
+
       if (method === 'initialize'){
         //新版本已经在 await client.connect(transport); 完成协商，不需要处理
-        //这里是可以通过 
+        //这里是可以通过
         if(mcpClient._initializeInfo){
           return mcpClient._initializeInfo;
         }else if (mcpClient.initialize){
@@ -233,8 +281,8 @@ export async function handle(methodfull, params, id, socket ) {
           //console.log("Initialize1:", JSON.stringify(initialize, null, 2));
           return initialize;
         }
-        
-      } 
+
+      }
 
       if (method === 'list') {
         let tools = await mcpClient.listTools();
@@ -302,7 +350,11 @@ export function startMCPServerProxy(){
   
   //如果已经存在删除
   if (fs.existsSync(PIPE_PATH)){
-      fs.unlinkSync(PIPE_PATH);
+      try {
+        fs.unlinkSync(PIPE_PATH);
+      } catch (error) {
+        logger.debug('无法删除已存在的管道文件，可能正在被使用:', error.message);
+      }
   }
 
   rpcserver.listen(PIPE_PATH, () => {
