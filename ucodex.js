@@ -127,6 +127,3 @@ function  main(){
 	 startCodexcli();
 }
 main();
-psTreeAsync(process.pid).then(children => {
-   logger.debug('子进程树:' + JSON.stringify(children));
-});
