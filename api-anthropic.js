@@ -3,6 +3,7 @@ import LogManager from './logger-manager.js';
 const logger = LogManager.getSystemLogger();
 
 export function mergeAnthropic(all){
+   logger.debug("mergeAnthropic input: "+ all);
    return mergeAnthropicChunks(all.split("\n"));
 }
 /**
@@ -237,8 +238,8 @@ export function mergeAnthropicChunks(rawChunks) {
   );
   
   if(message.content.length == 0){
-	  for( c in rawChunks){
-		  logger.debug(c);
+	  for(let c in rawChunks){
+		    logger.debug(c);
 	  }
   }
 

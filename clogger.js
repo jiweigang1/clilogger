@@ -24,6 +24,7 @@ function toSimpleLog(fullLog){
 }
 
 function logAPI(fullLog){
+    //console.log(fullLog);
     logger.full.debug(fullLog);
     logger.simple.debug(toSimpleLog(fullLog));
     //要及时输出
@@ -49,15 +50,15 @@ function headersToObject(headers) {
 function instrumentFetch() {
   if (!global.fetch || global.fetch.__ProxyInstrumented) return;
   
-  logger.debug("-------------Clogger instrumentFetch--------------------------");
+  logger.system.debug("-------------Clogger instrumentFetch--------------------------");
 
   const originalFetch = global.fetch;
   global.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-	
     const endpoints = [
 		    '/v1/messages'
 	  ];
+
     let urlPath = (new URL(url)).pathname;
 
     if(!(endpoints.some(t => urlPath.includes(t) && init.method == "POST"))){
@@ -72,20 +73,16 @@ function instrumentFetch() {
       body: init.body,
     });
 	
+      logger.full.debug("13132131313");
     //response = proxyResponse(response);
     let responseToClient = response.clone()
-
-	  const contentType = response.headers.get('content-type') || '';
-    const types = [
-		    'text/event-stream',
-        'application/json'
-	  ];
-    // 如果不是JSON返回格式不进行处理
-    //text/event-stream; charset=utf-8  注意后面会有参数，不能直接相等比较，要使用包含
-	  if(!types.some(t => contentType.includes(t))){
-		   return response;
+    // stream 不能通过 content type 判断，
+    let isStream = true;
+    if(Object.hasOwn(init.body, "stream") &&  !init.body.stream){
+        isStream = false;
+        logger.full.debug("模型不是流请求");
     }
-	  
+
 	  //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{
         url:url,
@@ -98,14 +95,22 @@ function instrumentFetch() {
             headers: headersToObject(response.headers)
       }};
 
+       logger.full.debug("1111111111111>>>>>>" );
+  
       try{
           //日志解析要异步执行保证效率
           (async ()=>{
-            let alllog = await response.text();
-            //logger.full.debug("alllog "+alllog)
-            fullLog.response.body = mergeAnthropic(alllog);     
+            if(isStream){
+              let alllog = await response.text();
+              //logger.full.debug("alllog "+alllog)
+              fullLog.response.body = mergeAnthropic(alllog);   
+            }else{
+               fullLog.response.body = await response.json();
+            }
+            logger.full.debug("adassdadadadad>>>>>>" + JSON.stringify(fullLog));
+           
             logAPI(fullLog);
-          })().catch(err => console.error('日志解析错误:', err));
+          })().catch(err => logger.system.error('日志解析错误:' + "\nStack trace: " + err.stack));
         
 
 
@@ -115,7 +120,7 @@ function instrumentFetch() {
               headers: response.headers
         });
       }catch(e){
-        logger.full.error(e);
+        logger.system.error(e);
       }
   };
   global.fetch.__ProxyInstrumented = true;
