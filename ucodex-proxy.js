@@ -25,7 +25,7 @@ function toSimple(full , wire_api){
     log.request.messages = full.request.body.messages;
     log.response.choices = full.response.body.choices;
   }else{
-    log.request.session_id = full.request.headerssession_id;
+    log.request.session_id = full.request.headers.session_id;
     log.request.model = full.request.body.model;
     log.request.instructions = full.request.body.instructions;
     log.request.input = full.request.body.input;
