@@ -98,7 +98,7 @@ async function handel(request, reply, endpoint){
     delete incomingHeaders["accept"];
     
     let url  = joinUrl(base_url,endpoint);
-    logger.debug("向endpoint 发送请求：" + url);
+    logger.system.debug("向endpoint 发送请求：" + url);
 
     let response = await fetch(url, {
       method: "POST",
