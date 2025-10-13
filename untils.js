@@ -251,7 +251,7 @@ async function getProcessAncestors(pid) {
 async function findFirstProcess(pid) {
    let  process = [...(await getProcessAncestors(pid))].reverse()
    for(let p of process){
-     if(p.name === "node.exe"){
+     if(p.name === "node.exe" ||  p.name === "node"){
         return p;
      }
    }
