@@ -248,7 +248,7 @@ export async function handle(methodfull, params, id, socket ) {
           mcpClient = await getOrCreateMCPClient(name);
           if (!mcpClient) {
             logger.error("MCP Client creation failed for: " + name);
-            throw new Error(`McpServer not found: ${name}`);
+            throw new Error(`McpServer not found: ${name}` + " 检查 mcpserver 是否已经配置，或者被禁用  " );
           }
         } catch (error) {
           logger.error(`Failed to create MCP client for ${name}:`, error);
