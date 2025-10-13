@@ -102,7 +102,12 @@ async function handel(request, reply, endpoint){
 
     let response = await fetch(url, {
       method: "POST",
-      headers: incomingHeaders,
+      //headers: incomingHeaders,
+      //使用白名单机制，mac 有问题
+      headers:{
+        'authorization': incomingHeaders['authorization'],
+        'content-type': incomingHeaders['content-type']
+      },
       body: JSON.stringify(body)
     });
 

@@ -84,7 +84,7 @@ function instrumentFetch() {
       body: init.body,
     });
 	
-      logger.full.debug("13132131313");
+    //logger.full.debug("13132131313");
     //response = proxyResponse(response);
     let responseToClient = response.clone()
     // stream 不能通过 content type 判断，
@@ -106,7 +106,7 @@ function instrumentFetch() {
             headers: headersToObject(response.headers)
       }};
 
-       logger.full.debug("1111111111111>>>>>>" );
+      //logger.full.debug("1111111111111>>>>>>" );
   
       try{
           //日志解析要异步执行保证效率
@@ -118,7 +118,8 @@ function instrumentFetch() {
             }else{
                fullLog.response.body = await response.json();
             }
-            logger.full.debug("adassdadadadad>>>>>>" + JSON.stringify(fullLog));
+            
+           // logger.full.debug("adassdadadadad>>>>>>" + JSON.stringify(fullLog));
            
             logAPI(fullLog);
 
