@@ -10,8 +10,8 @@ const wire_api = process.env.wire_api;
 //访问的 Base URL 地址
 const base_url = process.env.base_url;
 
-logger.system.debug("Base URL:", base_url);
-logger.system.debug("Wire API:", wire_api);
+logger.system.debug("Base URL:" + base_url);
+logger.system.debug("Wire API:" + wire_api);
 
 logger.system.debug(process.env);
 
