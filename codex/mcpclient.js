@@ -4,6 +4,7 @@ import LogManager from '../logger-manager.js';
 const logger = LogManager.getSystemLogger();
 
 const PIPE_PATH = await getPipePath();
+logger.debug("JsonRpcClient PIPE_PATH:" + PIPE_PATH);
 
 /**
  * 使用文件协议通信的 JSON-RPC 客户端

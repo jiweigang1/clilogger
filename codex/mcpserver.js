@@ -16,6 +16,9 @@ import LogManager from "../logger-manager.js";
 const logger = LogManager.getSystemLogger();
 
 const PIPE_PATH = await getPipePath();
+
+logger.debug("MCPServer PIPE_PATH:" + PIPE_PATH);
+
         initMCPConfig();
  let mcpConfig = loadMCPConfig();
 /**
