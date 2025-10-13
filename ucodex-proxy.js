@@ -10,10 +10,10 @@ const wire_api = process.env.wire_api;
 //访问的 Base URL 地址
 const base_url = process.env.base_url;
 
-logger.debug("Base URL:", base_url);
-logger.debug("Wire API:", wire_api);
+logger.system.debug("Base URL:", base_url);
+logger.system.debug("Wire API:", wire_api);
 
-logger.debug(process.env);
+logger.system.debug(process.env);
 
 function toSimple(full , wire_api){
    let log = {
@@ -159,7 +159,7 @@ async function handel(request, reply, endpoint){
 const startServer = async () => {
   try {
     await fastify.listen({ port: 3000, host: "0.0.0.0" });
-    logger.debug("✅ Server started");
+    logger.system.debug("✅ Server started");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
