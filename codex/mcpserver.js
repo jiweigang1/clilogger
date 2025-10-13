@@ -192,7 +192,7 @@ async function getOrCreateMCPClient(name) {
   // 获取配置
   const config = allMCPConfigs[name];
   if (!config) {
-    logger.error("MCP configuration not found for: " + name);
+    logger.error("MCP configuration not found for: " + name + " 检查配置文件是否缺失配置，或者 " + name + " 已经被禁用 " );
     return null;
   }
 
