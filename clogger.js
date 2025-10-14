@@ -1,13 +1,89 @@
 import {mergeAnthropic}  from './api-anthropic.js';
-import LoggerManage from "./logger-manager.js" 
+import LoggerManage from "./logger-manager.js"
 import { URL } from 'url';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 let  logger = LoggerManage.getLogger("claudecode");
 
 logger.system.debug("-------------Clogger Start--------------------------");
 
+// 配置文件相关功能
+let toolsConfig = {
+  blacklist: [],
+  descriptions: {}
+};
+
+function loadToolsConfig() {
+  try {
+    const configPath = join(process.cwd(), '.tools.json');
+    const configContent = readFileSync(configPath, 'utf8');
+    const config = JSON.parse(configContent);
+
+    if (config.tools) {
+      toolsConfig.blacklist = config.tools.blacklist || [];
+      toolsConfig.descriptions = config.tools.descriptions || {};
+      logger.system.debug(`成功加载配置文件，黑名单: ${toolsConfig.blacklist.length} 个工具，描述重写: ${Object.keys(toolsConfig.descriptions).length} 个工具`);
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      logger.system.debug('未找到 .tools.json 配置文件，使用默认配置');
+    } else {
+      logger.system.error(`加载配置文件失败: ${error.message}`);
+    }
+  }
+}
+
+// 在启动时加载配置
+loadToolsConfig();
+
 function deepClone(obj) {
   const result = JSON.parse(JSON.stringify(obj));
   return result;
+}
+
+// 处理请求body中的tools，应用黑名单过滤和描述改写
+function processRequestTools(body) {
+  if (!body || !body.tools || !Array.isArray(body.tools)) {
+    return body;
+  }
+
+  const originalCount = body.tools.length;
+
+  // 过滤黑名单中的工具
+  body.tools = body.tools.filter(tool => {
+    const toolName = tool.name || tool.function?.name;
+    if (!toolName) return true;
+
+    const isBlacklisted = toolsConfig.blacklist.includes(toolName);
+    if (isBlacklisted) {
+      logger.system.debug(`过滤黑名单工具: ${toolName}`);
+    }
+    return !isBlacklisted;
+  });
+
+  // 改写工具描述
+  body.tools = body.tools.map(tool => {
+    const toolName = tool.name || tool.function?.name;
+    if (toolName && toolsConfig.descriptions[toolName]) {
+      logger.system.debug(`改写工具描述: ${toolName} -> ${toolsConfig.descriptions[toolName]}`);
+
+      // 根据工具结构更新描述
+      if (tool.description !== undefined) {
+        tool.description = toolsConfig.descriptions[toolName];
+      } else if (tool.function && tool.function.description !== undefined) {
+        tool.function.description = toolsConfig.descriptions[toolName];
+      }
+    }
+    return tool;
+  });
+
+  const filteredCount = body.tools.length;
+  if (originalCount !== filteredCount) {
+    logger.system.debug(`工具过滤完成: ${originalCount} -> ${filteredCount}`);
+  }
+
+  return body;
 }
 function formateLine(str){
     let r = str.replace(/\\n/g, '\n');
@@ -78,10 +154,29 @@ function instrumentFetch() {
     }
 
     //打印请求信息 init.body
+    let processedBody = init.body;
+
+    // 如果是模型请求，处理请求body中的tools
+    if (init.body) {
+      try {
+        const bodyObj = JSON.parse(init.body);
+        const processedBodyObj = processRequestTools(bodyObj);
+        processedBody = JSON.stringify(processedBodyObj);
+
+        if (processedBody !== init.body) {
+          logger.system.debug('请求body中的tools已被处理');
+        }
+      } catch (error) {
+        logger.system.error(`处理请求body失败: ${error.message}`);
+        // 如果处理失败，使用原始body
+        processedBody = init.body;
+      }
+    }
+
     let response = await originalFetch(url, {
       method: init.method,
       headers: init.headers,
-      body: init.body,
+      body: processedBody,
     });
 	
     //logger.full.debug("13132131313");
@@ -99,7 +194,7 @@ function instrumentFetch() {
         url:url,
         method: init.method,
         headers: headersToObject(init.headers),
-        body: JSON.parse(init.body)
+        body: JSON.parse(processedBody)
       },response:{
             status: response.status,
             statusText: response.statusText,
