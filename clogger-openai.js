@@ -2,7 +2,7 @@ import {mergeAnthropic}  from './api-anthropic.js';
 import LoggerManage from "./logger-manager.js" 
 import { URL } from 'url';
 import anthropicTransformer from  "./anthropic-transformer.js"
-import {parseOpenAIChatCompletion} from "./api-opeai.js";
+import {parseOpenAIChatCompletion} from "./api-openai.js";
 let  logger = LoggerManage.getLogger("claudecode");
 
 logger.system.debug("-------------Clogger Start--------------------------");
@@ -101,25 +101,8 @@ function instrumentFetch() {
       body: openaiRequestBodyString,
     });
 
-    let toClient = response.clone();
-    
-	  const contentType = response.headers.get('content-type') || '';
-    const types = [
-		    'text/event-stream',
-        'application/json'
-	  ];
-    // 如果不是JSON返回格式不进行处理
-    //text/event-stream; charset=utf-8  注意后面会有参数，不能直接相等比较，要使用包含
-	  if(!types.some(t => contentType.includes(t))){
-      let text = await toClient.text();
-      logger.system.debug("返回结果无法处理: " + url + " " + contentType + "\n -> " + text);
-      return new Response(text, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers
-      });
-    }
-	  
+    let responseToClient = response.clone();
+     
 	  //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{
         url:url,
@@ -137,13 +120,13 @@ function instrumentFetch() {
         response: {}
       }};
 
-    let         res = await anthropicTransformer.transformResponseIn(toClient);
+    let         res = await anthropicTransformer.transformResponseIn(responseToClient);
     let toClientRes = await res.clone();
 
     (async () => {
        
       fullLog.openai.response.body  =  await parseOpenAIChatCompletion(await response.text());
-      fullLog.response.body  =  mergeAnthropic(await res.text());
+      fullLog.response.body         =  mergeAnthropic(await res.text());
 
       //其他类型是错误的
       logAPI(fullLog);
