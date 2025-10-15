@@ -178,7 +178,60 @@ function instrumentFetch() {
       headers: init.headers,
       body: processedBody,
     });
-	
+
+    // 检查响应状态，处理错误情况
+    if (!response.ok) {
+      // 读取原始错误响应
+      const errorText = await response.text();
+      logger.system.error(`API error response: ${response.status} ${response.statusText}`, {
+        url: url,
+        status: response.status,
+        errorResponse: errorText
+      });
+
+      // 尝试解析错误响应并转换为通用错误格式
+      let errorResponse;
+      try {
+        const originalError = JSON.parse(errorText);
+
+        // 构建通用错误响应格式
+        errorResponse = {
+          type: "error",
+          error: {
+            type: "api_error",
+            message: originalError.error?.message || originalError.message || `API error: ${response.statusText}`,
+            code: originalError.error?.code || originalError.code || `API_${response.status}_ERROR`
+          }
+        };
+
+        // 如果有详细错误信息，保留原始结构
+        if (originalError.error?.details) {
+          errorResponse.error.details = originalError.error.details;
+        }
+
+      } catch (parseError) {
+        // 如果无法解析错误JSON，使用通用错误格式
+        logger.system.error(`Failed to parse error response: ${parseError.message}`);
+        errorResponse = {
+          type: "error",
+          error: {
+            type: "api_error",
+            message: `API error: ${response.statusText}`,
+            code: `API_${response.status}_ERROR`
+          }
+        };
+      }
+
+      // 返回标准化的错误响应
+      return new Response(JSON.stringify(errorResponse), {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+    }
+
     //logger.full.debug("13132131313");
     //response = proxyResponse(response);
     let responseToClient = response.clone()

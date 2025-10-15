@@ -20,8 +20,18 @@ function start(){
     let allConfig = loadConfig();
     let choices = [];
     Object.entries(allConfig).forEach(([key, value], index) => {
-        choices.push({ name: `${index}. ${key}`, value: key });
+        if (value.enable === true) {
+            choices.push({ name: `${index}. ${key}`, value: key });
+        }
     });
+
+    // 检查是否有启用的模型
+    if (choices.length === 0) {
+        console.error("错误：没有启用的模型配置！");
+        console.log("请检查配置文件，确保至少有一个模型的 enable 设置为 true。");
+        logger.error("没有启用的模型配置，程序退出");
+        process.exit(1);
+    }
 
     (async () => {
         const answers = await inquirer.prompt([
