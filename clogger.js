@@ -134,6 +134,7 @@ function headersToObject(headers) {
  * 当前的逻辑需要优化
  * 
  */
+ 
 function instrumentFetch() {
   if (!global.fetch || global.fetch.__ProxyInstrumented) return;
   
@@ -143,12 +144,13 @@ function instrumentFetch() {
   global.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const endpoints = [
-		    '/v1/messages'
+		    '/v1/messages',
+			'/anthropic/v1/messages'
 	  ];
 
     let urlPath = (new URL(url)).pathname;
 
-    if(!(endpoints.some(t => urlPath.includes(t) && init.method == "POST"))){
+    if(!(endpoints.some(t => urlPath.includes(t) && (init.method == "POST" || init.method == "post" )     ))){
        logger.system.debug("不是模型请求直接返回" +init.method +":" + url +" -> " + urlPath);
        return originalFetch(input,init);
     }
@@ -172,12 +174,24 @@ function instrumentFetch() {
         processedBody = init.body;
       }
     }
+	//如果对 tools 修改了这里的长度肯定要变化的
+	let requestHeaders = {...init.headers}
+	    delete requestHeaders["content-length"]; //可能还有大小写问题 
+		//console.log(requestHeaders);
+	
+	let response;
+	try{
+		  response = await originalFetch(url, {
+			  method: init.method,
+			  headers: requestHeaders,
+			  body: processedBody,
+		  });
+		
+	}catch(e){
+		console.log(e);
+	}
 
-    let response = await originalFetch(url, {
-      method: init.method,
-      headers: init.headers,
-      body: processedBody,
-    });
+    
 	
     //logger.full.debug("13132131313");
     //response = proxyResponse(response);
@@ -188,6 +202,7 @@ function instrumentFetch() {
         isStream = false;
         logger.full.debug("模型不是流请求");
     }
+	
 
 	  //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{
@@ -213,7 +228,7 @@ function instrumentFetch() {
             }else{
                fullLog.response.body = await response.json();
             }
-            
+			
            // logger.full.debug("adassdadadadad>>>>>>" + JSON.stringify(fullLog));
            
             logAPI(fullLog);
@@ -233,6 +248,7 @@ function instrumentFetch() {
   };
   global.fetch.__ProxyInstrumented = true;
 }
+
 try{
   instrumentFetch();
 }catch(e){
