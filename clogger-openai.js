@@ -102,7 +102,51 @@ function instrumentFetch() {
     });
 
     let responseToClient = response.clone();
-     
+
+    // 判断OpenRouter响应是否为异常
+    if (!response.ok) {
+      // 读取OpenRouter错误响应
+      const openrouterErrorText = await response.text();
+      logger.system.error(`OpenRouter API error response: ${response.status} ${response.statusText}`, {
+        url: url,
+        status: response.status,
+        errorResponse: openrouterErrorText
+      });
+
+      // 将OpenRouter错误响应转换为Claude Code错误响应格式
+      let claudeErrorResponse;
+      try {
+        const openrouterError = JSON.parse(openrouterErrorText);
+        claudeErrorResponse = {
+          type: "error",
+          error: {
+            type: "api_error",
+            message: openrouterError.error?.message || `OpenRouter API error: ${response.statusText}`,
+            code: `OPENROUTER_${response.status}_ERROR`
+          }
+        };
+      } catch (parseError) {
+        // 如果无法解析OpenRouter的错误JSON，使用通用错误格式
+        claudeErrorResponse = {
+          type: "error",
+          error: {
+            type: "api_error",
+            message: `OpenRouter API error: ${response.statusText}`,
+            code: `OPENROUTER_${response.status}_ERROR`
+          }
+        };
+      }
+
+      // 返回转换后的错误响应
+      return new Response(JSON.stringify(claudeErrorResponse), {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+    }
+
 	  //完整的请求日志，保护请求和响应
 	  let fullLog = {request:{
         url:url,

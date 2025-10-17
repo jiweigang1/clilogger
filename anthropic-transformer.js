@@ -200,7 +200,7 @@ class AnthropicTransformer {
   }
 
   async transformResponseIn(response) {
-    const isStream = response.headers.get("Content-Type")?.includes("text/event-stream");
+    const isStream = true; //response.headers.get("Content-Type")?.includes("text/event-stream");
     //处理流式返回
     if (isStream) {
       if (!response.body) {
@@ -212,9 +212,9 @@ class AnthropicTransformer {
       //console.log("转换后的流:", convertedStream);
       return new Response(convertedStream, {
         headers: {
-          "Content-Type": "text/event-stream",
+          "Content-Type": response.headers.get("Content-Type"),
           "Cache-Control": "no-cache",
-          Connection: "keep-alive",
+          "Connection": response.headers.get("Connection"),
         },
       });
     } else {

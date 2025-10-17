@@ -20,8 +20,18 @@ function start(){
     let allConfig = loadConfig();
     let choices = [];
     Object.entries(allConfig).forEach(([key, value], index) => {
-        choices.push({ name: `${index}. ${key}`, value: key });
+        if (value.enable === true) {
+            choices.push({ name: `${index}. ${key}`, value: key });
+        }
     });
+
+    // 检查是否有启用的模型
+    if (choices.length === 0) {
+        console.error("错误：没有启用的模型配置！");
+        console.log("请检查配置文件，确保至少有一个模型的 enable 设置为 true。");
+        logger.error("没有启用的模型配置，程序退出");
+        process.exit(1);
+    }
 
     (async () => {
         const answers = await inquirer.prompt([
@@ -35,6 +45,15 @@ function start(){
 
         var config = allConfig[answers.choice];
         let env =  config.env;
+        // 添加 ANTHROPIC_ 前缀到环境变量
+        let anthropicEnv = {};
+        Object.keys(env).forEach(key => {
+            if (['BASE_URL', 'AUTH_TOKEN', 'MODEL', 'SMALL_FAST_MODEL'].includes(key)) {
+                anthropicEnv[`ANTHROPIC_${key}`] = env[key];
+            } else {
+                anthropicEnv[key] = env[key];
+            }
+        });
         // claudecode 环境变量是可以通过 env 传递到 mcpserver
         let claudePath = config?.CLAUDE_PATH || process.env.CLAUDE_PATH || getClaudePath();
         let dir = path.dirname(fileURLToPath(import.meta.url));
@@ -48,7 +67,7 @@ function start(){
 
         const child = spawn(claudePath,[],{
                 env:{
-                    ...env,
+                    ...anthropicEnv,
                      PIPE_PATH_PRE: process.pid
                 },
                 stdio: 'inherit', // 继承父进程 stdio，方便交互,
