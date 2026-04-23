@@ -213,7 +213,7 @@ async function handel(request, reply, endpoint){
         }
       }
     //如果对 tools 修改了这里的长度肯定要变化的
-    let requestHeaders = {...request.headers}
+    let requestHeaders = {...request.headers,"accept-encoding":"identity"}
         delete requestHeaders["content-length"]; //可能还有大小写问题 
       //console.log(requestHeaders);
     
