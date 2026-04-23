@@ -32,7 +32,13 @@ export function getCloggerFileURL(){
 }
 //C:\Users\gang.ji\AppData\Roaming\npm\node_modules\@anthropic-ai\claude-code
 export function getClaudePath(){
-     return path.join(getGlobalNpmPath(),'@anthropic-ai',"claude-code","cli.js");
+     //如果 cli.js 不存在使用 cli-wrapper.cjs 兼容新的版本
+     const basePath = path.join(getGlobalNpmPath(),'@anthropic-ai',"claude-code");
+     const cliPath = path.join(basePath,"cli.js");
+     if(fs.existsSync(cliPath)){
+         return cliPath;
+     }
+     return path.join(basePath,"cli-wrapper.cjs");
 }
 //C:\Users\gang.ji\AppData\Roaming\npm\node_modules\@openai\codex\bin\codex.js
 export function getCodexPath(){

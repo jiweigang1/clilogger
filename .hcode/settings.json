@@ -1,0 +1,14 @@
+{
+  "env": {},
+  "permissions": {
+    "allow": [],
+    "deny": [],
+    "ask": []
+  },
+  "autoMode": {
+    "enabled": false,
+    "model": "",
+    "maxConsecutiveDenials": 3,
+    "maxTotalDenials": 20
+  }
+}

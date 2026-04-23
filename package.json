@@ -1,6 +1,6 @@
 {
   "name": "@dahawa/hawa-cli-analysis",
-  "version": "1.0.10",
+  "version": "2.2.0",
   "main": "index",
   "bin": {
     "uclaude": "uclaude.js",
@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node uclaude.js",
-    "publish": "npm publish --access public"
+    "release": "npm publish --access public"
   },
   "type": "module",
   "repository": {
