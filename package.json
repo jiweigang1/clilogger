@@ -1,6 +1,6 @@
 {
   "name": "@dahawa/hawa-cli-analysis",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "main": "index",
   "bin": {
     "uclaude": "uclaude.js",

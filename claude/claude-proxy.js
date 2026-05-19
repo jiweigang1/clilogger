@@ -122,11 +122,13 @@ function logAPI(fullLog){
 }
 
 function headersToObject(headers) {
-  const obj = {};
-  try {
-    for (const [k, v] of headers.entries()) obj[k] = v;
-  } catch {}
-  return obj;
+  if (!headers) return {};
+
+  if (typeof headers.entries === "function") {
+    return Object.fromEntries(headers.entries());
+  }
+
+  return { ...headers };
 }
 
 const fastify = Fastify(
